@@ -24,6 +24,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -53,48 +55,78 @@ jobs:
           exit 1
         }
 
-    - name: Publish Windows x64
+    - name: Generate version tag
       if: github.event_name == 'push'
-      run: dotnet publish --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --output ./publish/win-x64
+      id: version
+      run: |
+        $date = Get-Date -Format "yyyy.MM.dd"
+        $count = git rev-list --count HEAD
+        $version = "v$date.$count"
+        echo "tag=$version" >> $env:GITHUB_OUTPUT
+        echo "Generated version: $version"
 
-    - name: Create Release Archive
+    - name: Publish Full Self-Contained
+      if: github.event_name == 'push'
+      run: dotnet publish --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --output ./publish/full
+
+    - name: Publish Framework-Dependent with Dependencies
+      if: github.event_name == 'push'
+      run: dotnet publish --configuration Release --runtime win-x64 --self-contained false -p:PublishSingleFile=true --output ./publish/deps
+
+    - name: Publish Framework-Dependent Minimal
+      if: github.event_name == 'push'
+      run: dotnet publish --configuration Release --no-self-contained --output ./publish/minimal
+
+    - name: Create Release Archives
       if: github.event_name == 'push'
       run: |
-        cd publish/win-x64
-        7z a ../../SolusManifestApp-latest-win-x64.zip *
+        cd publish/full
+        7z a ../../SolusManifestApp-${{ steps.version.outputs.tag }}-full.zip *
+        cd ../deps
+        7z a ../../SolusManifestApp-${{ steps.version.outputs.tag }}-deps.zip *
+        cd ../minimal
+        7z a ../../SolusManifestApp-${{ steps.version.outputs.tag }}-minimal.zip *
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       if: github.event_name == 'push' && success()
       with:
-        name: SolusManifestApp-Build-${{ github.sha }}
+        name: SolusManifestApp-${{ steps.version.outputs.tag }}
         path: |
-          SolusManifestApp-latest-win-x64.zip
+          SolusManifestApp-*.zip
         retention-days: 30
 
-    - name: Delete existing latest release
-      if: github.event_name == 'push' && success()
-      continue-on-error: true
-      run: |
-        gh release delete latest --yes
-      env:
-        GH_TOKEN: ${{ github.token }}
-
-    - name: Delete existing latest tag
-      if: github.event_name == 'push' && success()
-      continue-on-error: true
-      run: |
-        git push origin :refs/tags/latest
-      env:
-        GH_TOKEN: ${{ github.token }}
-
-    - name: Create Latest Release
+    - name: Create Release
       uses: softprops/action-gh-release@v2
       if: github.event_name == 'push' && success()
       with:
-        tag_name: latest
-        name: Latest Build (Development)
-        prerelease: true
-        files: SolusManifestApp-latest-win-x64.zip
+        tag_name: ${{ steps.version.outputs.tag }}
+        name: Release ${{ steps.version.outputs.tag }}
+        prerelease: false
+        generate_release_notes: true
+        files: |
+          SolusManifestApp-${{ steps.version.outputs.tag }}-full.zip
+          SolusManifestApp-${{ steps.version.outputs.tag }}-deps.zip
+          SolusManifestApp-${{ steps.version.outputs.tag }}-minimal.zip
+        body: |
+          ## Release ${{ steps.version.outputs.tag }}
+
+          **Build Date:** ${{ github.event.head_commit.timestamp }}
+          **Commit:** ${{ github.sha }}
+
+          ### Downloads
+
+          Choose the version that fits your needs:
+
+          - **Full Self-Contained** (`-full.zip`): Everything included, no .NET runtime needed (~80MB)
+          - **Framework-Dependent with Dependencies** (`-deps.zip`): Requires .NET 8.0 runtime, includes other dependencies (~10MB)
+          - **Minimal** (`-minimal.zip`): Requires .NET 8.0 runtime, no bundled dependencies (~1MB)
+
+          ### Installation
+          1. Download the zip file for your preferred variant
+          2. Extract to a folder
+          3. Run `SolusManifestApp.exe`
+
+          **Note:** For `-deps` and `-minimal` variants, install [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) first.
       env:
         GITHUB_TOKEN: ${{ github.token }}
