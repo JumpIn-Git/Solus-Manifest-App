@@ -24,7 +24,6 @@ namespace SolusManifestApp.ViewModels
         private readonly SettingsService _settingsService;
         private readonly CacheService _cacheService;
         private readonly NotificationService _notificationService;
-        private readonly DownloadService _downloadService;
         private readonly LuaFileManager _luaFileManager;
         private readonly ArchiveExtractionService _archiveExtractor;
         private readonly SteamApiService _steamApiService;
@@ -90,7 +89,6 @@ namespace SolusManifestApp.ViewModels
             SettingsService settingsService,
             CacheService cacheService,
             NotificationService notificationService,
-            DownloadService downloadService,
             LoggerService logger)
         {
             _fileInstallService = fileInstallService;
@@ -101,23 +99,12 @@ namespace SolusManifestApp.ViewModels
             _settingsService = settingsService;
             _cacheService = cacheService;
             _notificationService = notificationService;
-            _downloadService = downloadService;
 
             // Initialize new services
             var stpluginPath = _steamService.GetStPluginPath() ?? "";
             _luaFileManager = new LuaFileManager(stpluginPath);
             _archiveExtractor = new ArchiveExtractionService();
             _steamApiService = new SteamApiService(_cacheService);
-
-            // Subscribe to download completed event for auto-refresh
-            _downloadService.DownloadCompleted += OnDownloadCompleted;
-        }
-
-        private async void OnDownloadCompleted(object? sender, DownloadItem downloadItem)
-        {
-            _logger.Info($"Download completed: {downloadItem.GameName}. Auto-refreshing library...");
-            await Task.Delay(500); // Small delay to ensure file operations are complete
-            RefreshLibrary();
         }
 
         partial void OnSearchQueryChanged(string value)

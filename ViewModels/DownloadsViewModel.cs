@@ -52,6 +52,15 @@ namespace SolusManifestApp.ViewModels
             ActiveDownloads = _downloadService.ActiveDownloads;
 
             RefreshDownloadedFiles();
+
+            // Subscribe to download completed event for auto-refresh
+            _downloadService.DownloadCompleted += OnDownloadCompleted;
+        }
+
+        private void OnDownloadCompleted(object? sender, DownloadItem downloadItem)
+        {
+            // Auto-refresh the downloaded files list when a download completes
+            RefreshDownloadedFiles();
         }
 
         [RelayCommand]

@@ -46,7 +46,8 @@
       "Bash(start \"\" \"bin/Release/net8.0-windows/SolusManifestApp.exe\")",
       "Bash(\"bin/Release/net8.0-windows/SolusManifestApp.exe\")",
       "Bash(dotnet msbuild:*)",
-      "WebFetch(domain:api.steamcmd.net)"
+      "WebFetch(domain:api.steamcmd.net)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []
