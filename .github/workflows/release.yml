@@ -1,0 +1,63 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Publish Windows x64
+      run: dotnet publish --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --output ./publish/win-x64
+
+    - name: Create Release Archive
+      run: |
+        cd publish/win-x64
+        7z a ../../SolusManifestApp-${{ github.ref_name }}-win-x64.zip *
+
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          SolusManifestApp-${{ github.ref_name }}-win-x64.zip
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        body: |
+          ## Solus Manifest App ${{ github.ref_name }}
+
+          ### Downloads
+          - **Windows x64**: SolusManifestApp-${{ github.ref_name }}-win-x64.zip
+
+          ### Installation
+          1. Download the zip file for your platform
+          2. Extract the contents to a folder
+          3. Run `SolusManifestApp.exe`
+
+          ### What's Changed
+          See full changelog below.
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
