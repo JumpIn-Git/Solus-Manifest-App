@@ -48,7 +48,7 @@ jobs:
 
     - name: Test build output
       run: |
-        if (Test-Path "./bin/Release/net8.0-windows/SolusManifestApp.exe") {
+        if (Test-Path "./bin/Release/net8.0-windows10.0.19041.0/SolusManifestApp.exe") {
           Write-Host "✅ Build successful - SolusManifestApp.exe created"
         } else {
           Write-Host "❌ Build failed - executable not found"
