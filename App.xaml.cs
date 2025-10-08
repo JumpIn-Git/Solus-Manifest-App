@@ -104,16 +104,16 @@ namespace SolusManifestApp
                 HandleProtocolUrl(string.Join(" ", e.Args));
             }
 
-            // Check for updates if enabled
-            if (settings.AutoCheckUpdates)
+            // Check for updates based on mode
+            if (settings.AutoUpdate != Models.AutoUpdateMode.Disabled)
             {
-                _ = CheckForUpdatesAsync();
+                _ = CheckForUpdatesAsync(settings.AutoUpdate);
             }
 
             base.OnStartup(e);
         }
 
-        private async Task CheckForUpdatesAsync()
+        private async Task CheckForUpdatesAsync(Models.AutoUpdateMode mode)
         {
             try
             {
@@ -124,19 +124,28 @@ namespace SolusManifestApp
 
                 if (hasUpdate && updateInfo != null)
                 {
-                    await Dispatcher.InvokeAsync(() =>
+                    if (mode == Models.AutoUpdateMode.AutoDownloadAndInstall)
                     {
-                        var result = MessageBoxHelper.Show(
-                            $"A new version ({updateInfo.TagName}) is available!\n\nWould you like to download and install it now?\n\nCurrent version: {updateService.GetCurrentVersion()}",
-                            "Update Available",
-                            System.Windows.MessageBoxButton.YesNo,
-                            System.Windows.MessageBoxImage.Information);
-
-                        if (result == System.Windows.MessageBoxResult.Yes)
+                        // Auto download and install without asking
+                        await DownloadAndInstallUpdateAsync(updateInfo);
+                    }
+                    else // CheckOnly mode
+                    {
+                        // Ask user if they want to update
+                        await Dispatcher.InvokeAsync(() =>
                         {
-                            _ = DownloadAndInstallUpdateAsync(updateInfo);
-                        }
-                    });
+                            var result = MessageBoxHelper.Show(
+                                $"A new version ({updateInfo.TagName}) is available!\n\nWould you like to download and install it now?\n\nCurrent version: {updateService.GetCurrentVersion()}",
+                                "Update Available",
+                                System.Windows.MessageBoxButton.YesNo,
+                                System.Windows.MessageBoxImage.Information);
+
+                            if (result == System.Windows.MessageBoxResult.Yes)
+                            {
+                                _ = DownloadAndInstallUpdateAsync(updateInfo);
+                            }
+                        });
+                    }
                 }
             }
             catch

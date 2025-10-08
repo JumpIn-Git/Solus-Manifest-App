@@ -209,11 +209,19 @@
                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                            Margin="0,0,0,15"/>
 
-                                <CheckBox Content="Auto-check for updates on startup"
-                                          IsChecked="{Binding AutoCheckUpdates}"
-                                          Foreground="{DynamicResource TextPrimaryBrush}"
+                                <TextBlock Text="Auto-Update"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="0,0,0,5"/>
+                                <ComboBox SelectedValue="{Binding SelectedAutoUpdateMode}"
+                                          SelectedValuePath="Tag"
+                                          FontSize="14"
+                                          Padding="10,8"
                                           Margin="0,0,0,10"
-                                          ToolTip="Automatically check for new versions when the app starts"/>
+                                          ToolTip="Control how the app handles updates">
+                                    <ComboBoxItem Content="Disabled - Never check for updates" Tag="Disabled"/>
+                                    <ComboBoxItem Content="Check Only - Notify me about updates" Tag="CheckOnly"/>
+                                    <ComboBoxItem Content="Auto Download &amp; Install - Update automatically" Tag="AutoDownloadAndInstall"/>
+                                </ComboBox>
 
                                 <CheckBox Content="Minimize to system tray"
                                           IsChecked="{Binding MinimizeToTray}"

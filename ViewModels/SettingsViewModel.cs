@@ -43,6 +43,9 @@ namespace SolusManifestApp.ViewModels
         private bool _autoCheckUpdates;
 
         [ObservableProperty]
+        private string _selectedAutoUpdateMode = "CheckOnly";
+
+        [ObservableProperty]
         private bool _minimizeToTray;
 
         [ObservableProperty]
@@ -133,6 +136,7 @@ namespace SolusManifestApp.ViewModels
         partial void OnApiKeyChanged(string value) => MarkAsUnsaved();
         partial void OnDownloadsPathChanged(string value) => MarkAsUnsaved();
         partial void OnAutoCheckUpdatesChanged(bool value) => MarkAsUnsaved();
+        partial void OnSelectedAutoUpdateModeChanged(string value) => MarkAsUnsaved();
         partial void OnMinimizeToTrayChanged(bool value) => MarkAsUnsaved();
         partial void OnAutoInstallAfterDownloadChanged(bool value) => MarkAsUnsaved();
         partial void OnShowNotificationsChanged(bool value) => MarkAsUnsaved();
@@ -277,6 +281,7 @@ namespace SolusManifestApp.ViewModels
             ApiKey = Settings.ApiKey;
             DownloadsPath = Settings.DownloadsPath;
             AutoCheckUpdates = Settings.AutoCheckUpdates;
+            SelectedAutoUpdateMode = Settings.AutoUpdate.ToString();
             MinimizeToTray = Settings.MinimizeToTray;
             AutoInstallAfterDownload = Settings.AutoInstallAfterDownload;
             ShowNotifications = Settings.ShowNotifications;
@@ -362,6 +367,13 @@ namespace SolusManifestApp.ViewModels
             Settings.ApiKey = ApiKey;
             Settings.DownloadsPath = DownloadsPath;
             Settings.AutoCheckUpdates = AutoCheckUpdates;
+
+            // Parse and save auto-update mode
+            if (Enum.TryParse<AutoUpdateMode>(SelectedAutoUpdateMode, out var autoUpdateMode))
+            {
+                Settings.AutoUpdate = autoUpdateMode;
+            }
+
             Settings.MinimizeToTray = MinimizeToTray;
             Settings.AutoInstallAfterDownload = AutoInstallAfterDownload;
             Settings.ShowNotifications = ShowNotifications;

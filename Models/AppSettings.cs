@@ -27,12 +27,20 @@ namespace SolusManifestApp.Models
         Cyberpunk
     }
 
+    public enum AutoUpdateMode
+    {
+        Disabled,
+        CheckOnly,
+        AutoDownloadAndInstall
+    }
+
     public class AppSettings
     {
         public string SteamPath { get; set; } = string.Empty;
         public string ApiKey { get; set; } = string.Empty;
         public string DownloadsPath { get; set; } = string.Empty;
-        public bool AutoCheckUpdates { get; set; } = true;
+        public bool AutoCheckUpdates { get; set; } = true; // Legacy - kept for compatibility
+        public AutoUpdateMode AutoUpdate { get; set; } = AutoUpdateMode.CheckOnly;
         public bool MinimizeToTray { get; set; } = true;
         public bool AutoInstallAfterDownload { get; set; } = false;
         public bool ShowNotifications { get; set; } = true;
