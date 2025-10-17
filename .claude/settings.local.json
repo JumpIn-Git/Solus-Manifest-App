@@ -59,7 +59,8 @@
       "Read(//c/Users/Morrenus/Desktop/RollerCoaster Tycoon Deluxe (285310)/RollerCoaster Tycoon Deluxe Manifests and Keys/**)",
       "Read(//c/Users/Morrenus/Desktop/**)",
       "Read(//c/Users/Morrenus/AppData/Roaming/SolusManifestApp/**)",
-      "Bash(start \"\" \"bin/Debug/net8.0-windows10.0.19041.0/SolusManifestApp.exe\")"
+      "Bash(start \"\" \"bin/Debug/net8.0-windows10.0.19041.0/SolusManifestApp.exe\")",
+      "Bash(key\" (semicolon separator),\nnot \"depotId key\" (space separator). This was causing \"Invalid depot key line\" errors\nwhen trying to download depots.\n\nUpdated DepotDownloaderWrapperService.cs line 188 to use semicolon separator.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

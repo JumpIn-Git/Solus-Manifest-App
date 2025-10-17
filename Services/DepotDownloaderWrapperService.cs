@@ -185,7 +185,7 @@ namespace SolusManifestApp.Services
                     {
                         if (!string.IsNullOrEmpty(depotKey))
                         {
-                            DepotKeyStore.AddKey($"{depotId} {depotKey}");
+                            DepotKeyStore.AddKey($"{depotId};{depotKey}");
                             LogInfo($"Loaded depot key for {depotId}");
                         }
                     }
