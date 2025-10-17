@@ -16,7 +16,7 @@ namespace SolusManifestApp.Services
 
         public DepotNameService()
         {
-            _logger = new LoggerService();
+            _logger = new LoggerService("DepotInfo");
         }
 
         /// <summary>

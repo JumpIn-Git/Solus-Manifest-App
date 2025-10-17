@@ -18,6 +18,7 @@ namespace SolusManifestApp.Services
         private readonly Dictionary<string, CancellationTokenSource> _downloadCancellations;
         private readonly object _collectionLock = new object();
         private readonly ManifestApiService _manifestApiService;
+        private readonly LoggerService _logger;
 
         public ObservableCollection<DownloadItem> ActiveDownloads { get; }
         public ObservableCollection<DownloadItem> QueuedDownloads { get; }
@@ -37,6 +38,7 @@ namespace SolusManifestApp.Services
             };
             _downloadCancellations = new Dictionary<string, CancellationTokenSource>();
             _manifestApiService = manifestApiService;
+            _logger = new LoggerService("Downloads");
             ActiveDownloads = new ObservableCollection<DownloadItem>();
             QueuedDownloads = new ObservableCollection<DownloadItem>();
             CompletedDownloads = new ObservableCollection<DownloadItem>();
@@ -734,9 +736,19 @@ namespace SolusManifestApp.Services
             bool verifyFiles = true,
             int maxDownloads = 8)
         {
+            _logger.Info($"[DepotDownloader] Starting download for {gameName} (App ID: {appId})");
+            _logger.Info($"[DepotDownloader] Depots to download: {depots.Count}");
+            _logger.Info($"[DepotDownloader] Output path: {outputPath}");
+            _logger.Info($"[DepotDownloader] Verify files: {verifyFiles}");
+            _logger.Info($"[DepotDownloader] Max concurrent downloads: {maxDownloads}");
+
+            // Sanitize game name to remove invalid path characters (: < > " / \ | ? *)
+            var sanitizedGameName = SanitizeFileName(gameName);
+            _logger.Info($"[DepotDownloader] Sanitized game name: '{gameName}' -> '{sanitizedGameName}'");
+
             // Create folder structure: {GameName} ({AppId})\{GameName}
-            var gameFolderName = $"{gameName} ({appId})";
-            var gameDownloadPath = Path.Combine(outputPath, gameFolderName, gameName);
+            var gameFolderName = $"{sanitizedGameName} ({appId})";
+            var gameDownloadPath = Path.Combine(outputPath, gameFolderName, sanitizedGameName);
 
             var downloadItem = new DownloadItem
             {
@@ -752,10 +764,12 @@ namespace SolusManifestApp.Services
             var cancellationTokenSource = new CancellationTokenSource();
             _downloadCancellations[downloadItem.Id] = cancellationTokenSource;
 
+            _logger.Info($"[DepotDownloader] Adding download item to ActiveDownloads (ID: {downloadItem.Id})");
             lock (_collectionLock)
             {
                 ActiveDownloads.Add(downloadItem);
             }
+            _logger.Info($"[DepotDownloader] Download item added successfully. ActiveDownloads count: {ActiveDownloads.Count}");
 
             try
             {
@@ -800,23 +814,29 @@ namespace SolusManifestApp.Services
                 try
                 {
                     // Always use anonymous login
+                    _logger.Info($"[DepotDownloader] Initializing Steam session (anonymous)...");
                     App.Current.Dispatcher.BeginInvoke(() =>
                     {
                         downloadItem.StatusMessage = "Connecting to Steam (anonymous)...";
                     });
 
                     var initialized = await depotDownloaderService.InitializeAsync("", "");
+                    _logger.Info($"[DepotDownloader] Steam initialization result: {initialized}");
 
                     if (!initialized)
                     {
+                        _logger.Error($"[DepotDownloader] Steam initialization failed!");
                         throw new Exception("Failed to initialize Steam session");
                     }
+
+                    _logger.Info($"[DepotDownloader] Steam session initialized successfully");
 
                     App.Current.Dispatcher.BeginInvoke(() =>
                     {
                         downloadItem.StatusMessage = $"Downloading {depots.Count} depots...";
                     });
 
+                    _logger.Info($"[DepotDownloader] Starting depot download...");
                     var success = await depotDownloaderService.DownloadDepotsAsync(
                         uint.Parse(appId),
                         depots,
@@ -825,9 +845,11 @@ namespace SolusManifestApp.Services
                         maxDownloads,
                         cancellationTokenSource.Token
                     );
+                    _logger.Info($"[DepotDownloader] Download completed with result: {success}");
 
                     if (success)
                     {
+                        _logger.Info($"[DepotDownloader] Download successful! Moving to CompletedDownloads");
                         App.Current.Dispatcher.BeginInvoke(() =>
                         {
                             downloadItem.Status = DownloadStatus.Completed;
@@ -860,6 +882,15 @@ namespace SolusManifestApp.Services
             }
             catch (Exception ex)
             {
+                _logger.Error($"[DepotDownloader] Download failed for {gameName} (App ID: {appId})");
+                _logger.Error($"[DepotDownloader] Exception: {ex.GetType().Name} - {ex.Message}");
+                _logger.Error($"[DepotDownloader] Stack trace: {ex.StackTrace}");
+
+                if (ex.InnerException != null)
+                {
+                    _logger.Error($"[DepotDownloader] Inner exception: {ex.InnerException.GetType().Name} - {ex.InnerException.Message}");
+                }
+
                 App.Current.Dispatcher.BeginInvoke(() =>
                 {
                     downloadItem.Status = DownloadStatus.Failed;
@@ -881,6 +912,23 @@ namespace SolusManifestApp.Services
             {
                 _downloadCancellations.Remove(downloadItem.Id);
             }
+        }
+
+        /// <summary>
+        /// Sanitizes a file/folder name by removing invalid characters
+        /// </summary>
+        private string SanitizeFileName(string fileName)
+        {
+            // Windows invalid path characters: < > : " / \ | ? *
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var sanitized = fileName;
+
+            foreach (var c in invalidChars)
+            {
+                sanitized = sanitized.Replace(c.ToString(), "");
+            }
+
+            return sanitized.Trim();
         }
     }
 }

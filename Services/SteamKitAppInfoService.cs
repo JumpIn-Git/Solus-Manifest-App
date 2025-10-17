@@ -21,7 +21,7 @@ namespace SolusManifestApp.Services
 
         public SteamKitAppInfoService()
         {
-            _logger = new LoggerService();
+            _logger = new LoggerService("SteamKit");
         }
 
         /// <summary>

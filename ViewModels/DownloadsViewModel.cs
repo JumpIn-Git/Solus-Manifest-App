@@ -56,7 +56,7 @@ namespace SolusManifestApp.ViewModels
             _steamApiService = steamApiService;
             _notificationService = notificationService;
             _libraryRefreshService = libraryRefreshService;
-            _logger = new LoggerService();
+            _logger = new LoggerService("DownloadsView");
 
             ActiveDownloads = _downloadService.ActiveDownloads;
 
@@ -150,7 +150,7 @@ namespace SolusManifestApp.ViewModels
 
                     // Parse depot keys from lua content
                     _logger.Info("Step 2: Parsing depot keys from lua content...");
-                    var depotFilterService = new DepotFilterService(new LoggerService());
+                    var depotFilterService = new DepotFilterService(new LoggerService("DepotFilter"));
                     var parsedDepotKeys = depotFilterService.ExtractDepotKeysFromLua(luaContent);
 
                     if (parsedDepotKeys.Count == 0)

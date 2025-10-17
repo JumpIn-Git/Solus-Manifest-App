@@ -58,7 +58,7 @@ namespace SolusManifestApp.Services
 
         public DepotDownloaderWrapperService()
         {
-            _logger = new LoggerService();
+            _logger = new LoggerService("DepotDownloader");
         }
 
         public async Task<bool> InitializeAsync(string username = "", string password = "")
