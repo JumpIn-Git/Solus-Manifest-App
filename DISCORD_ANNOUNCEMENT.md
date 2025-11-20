@@ -50,7 +50,7 @@ Download now: https://github.com/MorrenusGames/Solus-Manifest-App/releases/lates
 This app was built with AI assistance (Claude Code). If you have a problem with that, don't use the app. Simple as that.
 
 ## 🙏 Credits
-Huge thanks to **Melly** & the **Lua Tools** Discord community! Special thanks to **NicknineTheEagle** for DepotDumper.
+Thanks to **Melly** & the **Lua Tools** Discord community! Special thanks to **NicknineTheEagle** (DepotDumper) & **SteamRE** (DepotDownloader).
 
 Made with ❤️ for the Steam community
 🔗 Website: https://manifest.morrenus.xyz | Discord: https://discord.gg/morrenusgames

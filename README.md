@@ -84,6 +84,16 @@ This application integrates [**DepotDumper**](https://github.com/NicknineTheEagl
 - Integrated into tabbed interface with real-time logging
 - Enhanced error handling and user feedback
 
+### DepotDownloader
+This application integrates [**DepotDownloader**](https://github.com/SteamRE/DepotDownloader) by **SteamRE**.
+
+**Our Integration:**
+- Embedded DepotDownloader for downloading actual game files from Steam CDN
+- Real-time progress tracking with download speeds
+- Smart language and platform filtering
+- Background download management
+- Automatic installation after download completion
+
 ### Inspiration & Community
 A **huge thank you** to **Melly** from [**Lua Tools**](https://discord.gg/Qxeq7RmhXw) and their incredible Discord community. Your inspiration, guidance, and drive pushed me to create this tool for our community. The support and feedback from everyone has been invaluable.
 
