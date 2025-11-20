@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.2.3, etc.
 
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     runs-on: windows-latest
@@ -24,19 +27,10 @@ jobs:
       - name: Build Release
         run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true
 
-      - name: Get version from tag
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-        shell: bash
-
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Solus Manifest App ${{ github.ref_name }}
+          name: Solus Manifest App ${{ github.ref_name }}
           body: |
             ## 🎮 Solus Manifest App ${{ github.ref_name }}
 
@@ -59,15 +53,6 @@ jobs:
             ---
 
             **Full changelog**: https://github.com/${{ github.repository }}/commits/${{ github.ref_name }}
+          files: ./bin/Release/net8.0-windows10.0.19041.0/win-x64/publish/SolusManifestApp.exe
           draft: false
           prerelease: false
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/Release/net8.0-windows10.0.19041.0/win-x64/publish/SolusManifestApp.exe
-          asset_name: SolusManifestApp.exe
-          asset_content_type: application/octet-stream
