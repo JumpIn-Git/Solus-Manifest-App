@@ -240,19 +240,60 @@ namespace SolusManifestApp.ViewModels
             if (hasUpdate && updateInfo != null)
             {
                 var result = MessageBoxHelper.Show(
-                    $"A new version ({updateInfo.TagName}) is available!\n\n{updateInfo.Body}\n\nWould you like to download it?",
+                    $"A new version ({updateInfo.TagName}) is available!\n\nWould you like to download and install it now?\n\nCurrent version: {_updateService.GetCurrentVersion()}",
                     "Update Available",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Information);
 
                 if (result == MessageBoxResult.Yes)
                 {
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = updateInfo.HtmlUrl,
-                        UseShellExecute = true
-                    });
+                    await DownloadAndInstallUpdateAsync(updateInfo);
                 }
+            }
+            else
+            {
+                MessageBoxHelper.Show(
+                    "You are running the latest version!",
+                    "No Updates Available",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+        }
+
+        private async Task DownloadAndInstallUpdateAsync(UpdateInfo updateInfo)
+        {
+            try
+            {
+                _notificationService.ShowNotification("Downloading Update", "Downloading the latest version...", NotificationType.Info);
+
+                var progress = new Progress<double>(percent =>
+                {
+                    _notificationService.ShowNotification("Downloading Update", $"Progress: {percent:F1}%", NotificationType.Info);
+                });
+
+                var updatePath = await _updateService.DownloadUpdateAsync(updateInfo, progress);
+
+                if (!string.IsNullOrEmpty(updatePath))
+                {
+                    var result = MessageBoxHelper.Show(
+                        "Update downloaded successfully! The application will now restart to install the update.",
+                        "Update Ready",
+                        MessageBoxButton.OKCancel,
+                        MessageBoxImage.Information);
+
+                    if (result == MessageBoxResult.OK)
+                    {
+                        _updateService.InstallUpdate(updatePath);
+                    }
+                }
+                else
+                {
+                    _notificationService.ShowError("Failed to download update. Please try again or download manually from GitHub.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _notificationService.ShowError($"Failed to download update: {ex.Message}");
             }
         }
     }
