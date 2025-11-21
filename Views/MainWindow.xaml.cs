@@ -1,7 +1,9 @@
 using SolusManifestApp.ViewModels;
 using SolusManifestApp.Services;
+using System;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 
 namespace SolusManifestApp.Views
 {
@@ -17,6 +19,8 @@ namespace SolusManifestApp.Views
 
             Loaded += MainWindow_Loaded;
             Closing += MainWindow_Closing;
+            StateChanged += MainWindow_StateChanged;
+            SourceInitialized += MainWindow_SourceInitialized;
 
             // Restore window size
             var settings = _settingsService.LoadSettings();
@@ -90,6 +94,77 @@ namespace SolusManifestApp.Views
             {
                 Close();
             }
+        }
+
+        private void MainWindow_SourceInitialized(object? sender, System.EventArgs e)
+        {
+            // Fix for maximize issue - adjust max size to work area
+            var handle = new WindowInteropHelper(this).Handle;
+            if (handle != IntPtr.Zero)
+            {
+                HwndSource.FromHwnd(handle)?.AddHook(WindowProc);
+            }
+        }
+
+        private void MainWindow_StateChanged(object? sender, System.EventArgs e)
+        {
+            if (WindowState == WindowState.Maximized)
+            {
+                // Adjust for taskbar when maximized
+                var screen = System.Windows.Forms.Screen.FromHandle(new WindowInteropHelper(this).Handle);
+                MaxHeight = screen.WorkingArea.Height + 16; // +16 accounts for border
+                MaxWidth = screen.WorkingArea.Width + 16;
+            }
+            else
+            {
+                MaxHeight = double.PositiveInfinity;
+                MaxWidth = double.PositiveInfinity;
+            }
+        }
+
+        private IntPtr WindowProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            const int WM_GETMINMAXINFO = 0x0024;
+
+            if (msg == WM_GETMINMAXINFO)
+            {
+                // Handle window maximize to respect work area
+                var screen = System.Windows.Forms.Screen.FromHandle(hwnd);
+                if (screen != null)
+                {
+                    var workArea = screen.WorkingArea;
+                    var monitorArea = screen.Bounds;
+
+                    unsafe
+                    {
+                        var mmi = (MINMAXINFO*)lParam;
+                        mmi->ptMaxPosition.x = workArea.Left - monitorArea.Left;
+                        mmi->ptMaxPosition.y = workArea.Top - monitorArea.Top;
+                        mmi->ptMaxSize.x = workArea.Width;
+                        mmi->ptMaxSize.y = workArea.Height;
+                    }
+                    handled = true;
+                }
+            }
+
+            return IntPtr.Zero;
+        }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        private struct POINT
+        {
+            public int x;
+            public int y;
+        }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        private unsafe struct MINMAXINFO
+        {
+            public POINT ptReserved;
+            public POINT ptMaxSize;
+            public POINT ptMaxPosition;
+            public POINT ptMinTrackSize;
+            public POINT ptMaxTrackSize;
         }
     }
 }

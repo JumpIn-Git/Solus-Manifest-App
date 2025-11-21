@@ -245,4 +245,38 @@ namespace SolusManifestApp.Converters
             throw new NotImplementedException();
         }
     }
+
+    public class BoolToViewIconConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool isListView)
+            {
+                return isListView ? "📇" : "🎞"; // List icon when in list view, grid icon when in grid view
+            }
+            return "🎞";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class BoolToViewTextConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool isListView)
+            {
+                return isListView ? "Grid View" : "List View";
+            }
+            return "List View";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

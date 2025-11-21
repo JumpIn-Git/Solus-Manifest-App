@@ -151,7 +151,8 @@ namespace SolusManifestApp.ViewModels
 
             CurrentPage = GetOrCreateView("Library", () => new LibraryPage { DataContext = LibraryViewModel });
             CurrentPageName = "Library";
-            LibraryViewModel.RefreshLibrary();
+            // Load from cache async - now properly optimized
+            _ = LibraryViewModel.LoadFromCache();
         }
 
         [RelayCommand]

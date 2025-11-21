@@ -18,7 +18,7 @@ Solus Manifest App is a powerful Windows desktop application for managing Steam 
 ## ✨ Key Features
 
 ### Depot & Manifest Management
-- **Browse & Download Depots**: Search and download Steam depots with automatic key lookup
+- **Browse & Download Depots**: Search and download Steam depots with automatic key lookup via Morrenus API
 - **Manifest Downloads**: Download specific game manifests and depot files
 - **Version Management**: Download and install specific game versions using manifests
 - **DepotDownloader Integration**: Built-in DepotDownloader with progress tracking and notifications
@@ -28,21 +28,26 @@ Solus Manifest App is a powerful Windows desktop application for managing Steam 
 - **DepotDumper**: Integrated DepotDumper with 2FA support and QR code authentication
 - **Config VDF Key Extraction**: Extract depot keys from Steam's config.vdf
 - **Auto Config Keys Upload**: Automatically upload new depot keys to Morrenus database (hourly)
-- **SteamAuth Pro**: Generate encrypted tickets for Steam authentication
+- **SteamAuth Pro**: Generate encrypted tickets for Steam authentication (with matching app theming)
 - **Protocol Handler**: `solus://` URL protocol for quick downloads
+- **Auto-Update Manager**: Bulk enable/disable auto-updates for games with dedicated dialogs
 
 ### Library Management
-- **Library View**: Manage installed games, Lua scripts, and GreenLuma apps
-- **Performance Optimized**: Fast loading with background threading
+- **Pagination System**: Display library in pages (10, 20, 50, 100, or show all) for optimal performance
+- **Image Caching**: In-memory caching for instant image loading (~7MB for 100 games)
+- **List/Grid View Toggle**: Switch between compact list view and detailed grid view
+- **Performance Optimized**: Fast loading with background threading and smart rendering
 - **Steam Integration**: Automatically detect installed Steam games
 - **GreenLuma 2024**: Full integration with multiple installation modes
+- **Manage Installed Games**: View and manage Lua scripts, GreenLuma apps, and Steam games
 
 ### User Experience
 - **8 Premium Themes**: Default, Dark, Light, Cherry, Sunset, Forest, Grape, Cyberpunk
-- **Auto-Updates**: Automatic update checking with one-click downloads
+- **Auto-Updates**: Automatic update checking with date-based versioning (2025.x format)
 - **System Tray**: Minimize to tray with quick access menu
 - **Recent Games**: Quick access to recently played games
 - **Notifications**: Toast notifications for downloads and operations
+- **Responsive Design**: Pagination controls adapt properly in fullscreen/maximized mode
 
 ## 🚀 Installation
 

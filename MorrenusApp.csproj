@@ -12,6 +12,7 @@
     <!-- Version is auto-set by GitHub Actions from git tag -->
     <Authors>Solus</Authors>
     <Description>Solus Manifest App</Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <!-- Self-contained single-file publishing -->
     <PublishSingleFile>true</PublishSingleFile>

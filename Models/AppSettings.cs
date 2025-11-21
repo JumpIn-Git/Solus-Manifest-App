@@ -41,7 +41,6 @@ namespace SolusManifestApp.Models
         // API & Authentication
         public string ApiKey { get; set; } = string.Empty;
         public List<string> ApiKeyHistory { get; set; } = new List<string>();
-        public string SteamWebApiKey { get; set; } = string.Empty;
 
         // Steam Configuration
         public string SteamPath { get; set; } = string.Empty;
@@ -68,6 +67,7 @@ namespace SolusManifestApp.Models
         public double WindowWidth { get; set; } = 1400;
         public double WindowHeight { get; set; } = 850;
         public int StorePageSize { get; set; } = 20;
+        public int LibraryPageSize { get; set; } = 20;
         public bool RememberWindowPosition { get; set; } = true;
         public double WindowLeft { get; set; } = double.NaN;
         public double WindowTop { get; set; } = double.NaN;
@@ -92,5 +92,12 @@ namespace SolusManifestApp.Models
         public string SteamUsername { get; set; } = string.Empty;
         public bool VerifyFilesAfterDownload { get; set; } = true;
         public int MaxConcurrentDownloads { get; set; } = 8;
+
+        // Notification Preferences
+        public bool ShowGameAddedNotification { get; set; } = true;
+
+        // View Mode Preferences
+        public bool StoreListView { get; set; } = false; // false = grid, true = list
+        public bool LibraryListView { get; set; } = false; // false = grid, true = list
     }
 }

@@ -35,6 +35,20 @@ namespace SolusManifestApp.Models
             }
         }
 
+        private System.Windows.Media.Imaging.BitmapImage? _cachedBitmapImage;
+        public System.Windows.Media.Imaging.BitmapImage? CachedBitmapImage
+        {
+            get => _cachedBitmapImage;
+            set
+            {
+                if (_cachedBitmapImage != value)
+                {
+                    _cachedBitmapImage = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public string LocalPath { get; set; } = string.Empty;
         public LibraryItemType ItemType { get; set; }
         public string Version { get; set; } = string.Empty;

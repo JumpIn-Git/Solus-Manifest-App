@@ -27,8 +27,10 @@
 
             <TextBox Grid.Column="0"
                      Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
-                     FontSize="16"
-                     Padding="15"
+                     FontSize="13"
+                     Height="32"
+                     Padding="10,0"
+                     VerticalContentAlignment="Center"
                      Margin="0,0,10,0">
                 <TextBox.InputBindings>
                     <KeyBinding Key="Enter" Command="{Binding SearchGamesCommand}"/>
@@ -50,135 +52,318 @@
                            VerticalAlignment="Center"/>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Sort By:"
-                           Foreground="{DynamicResource TextPrimaryBrush}"
-                           FontSize="14"
-                           VerticalAlignment="Center"
-                           Margin="0,0,10,0"/>
+            <Grid>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Sort By:"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               FontSize="14"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0"/>
 
-                <Button Content="📅 Recently Updated"
+                    <Button Content="📅 Recently Updated"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding ChangeSortByCommand}"
+                            CommandParameter="updated"
+                            Padding="15,5"
+                            Margin="0,0,10,0"/>
+
+                    <Button Content="🔤 Alphabetical"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding ChangeSortByCommand}"
+                            CommandParameter="name"
+                            Padding="15,5"
+                            Margin="0,0,10,0"/>
+
+                    <Button Content="🔄 Load Library"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding LoadGamesCommand}"
+                            Padding="15,5"/>
+                </StackPanel>
+
+                <!-- View Toggle -->
+                <Button Command="{Binding ToggleViewCommand}"
                         Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding ChangeSortByCommand}"
-                        CommandParameter="updated"
                         Padding="15,5"
-                        Margin="0,0,10,0"/>
-
-                <Button Content="🔤 Alphabetical"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding ChangeSortByCommand}"
-                        CommandParameter="name"
-                        Padding="15,5"
-                        Margin="0,0,10,0"/>
-
-                <Button Content="🔄 Load Library"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding LoadGamesCommand}"
-                        Padding="15,5"/>
-            </StackPanel>
+                        HorizontalAlignment="Right">
+                    <Button.Content>
+                        <TextBlock>
+                            <Run Text="{Binding IsListView, Converter={StaticResource BoolToViewIconConverter}, Mode=OneWay}"/>
+                            <Run Text=" "/>
+                            <Run Text="{Binding IsListView, Converter={StaticResource BoolToViewTextConverter}, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Button.Content>
+                </Button>
+            </Grid>
         </StackPanel>
 
-        <!-- Games Grid -->
+        <!-- Games Grid/List -->
         <ScrollViewer Grid.Row="3"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
             <ItemsControl ItemsSource="{Binding Games}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
+                <ItemsControl.Style>
+                    <Style TargetType="ItemsControl">
+                        <Setter Property="ItemsPanel">
+                            <Setter.Value>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsListView}" Value="True">
+                                <Setter Property="ItemsPanel">
+                                    <Setter.Value>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Vertical"/>
+                                        </ItemsPanelTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ItemsControl.Style>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Style="{StaticResource ModernCardStyle}"
-                                Width="280"
-                                Height="350"
-                                Margin="0,0,20,20">
+                        <Border>
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource ModernCardStyle}">
+                                    <Setter Property="Width" Value="280"/>
+                                    <Setter Property="Height" Value="350"/>
+                                    <Setter Property="Margin" Value="0,0,20,20"/>
+                                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                            <Setter Property="Width" Value="Auto"/>
+                                            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                            <Setter Property="Height" Value="100"/>
+                                            <Setter Property="Margin" Value="0,0,0,10"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Grid>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="160"/>
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <!-- Game Image -->
-                                <Border Grid.Row="0"
-                                        Background="{DynamicResource SecondaryDarkBrush}"
-                                        CornerRadius="8">
-                                    <Grid>
-                                        <!-- Show cached icon if available -->
-                                        <Image Source="{Binding CachedIconPath}"
-                                               Stretch="UniformToFill"
-                                               Visibility="{Binding CachedIconPath, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                                        <!-- Placeholder if no icon -->
-                                        <TextBlock Text="🎮"
-                                                   FontSize="64"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource AccentBrush}"
-                                                   Visibility="{Binding CachedIconPath, Converter={StaticResource InverseNullToVisibilityConverter}}"/>
+                                <!-- Game Image Container -->
+                                <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Setter Property="Grid.Row" Value="0"/>
+                                            <Setter Property="Grid.Column" Value="0"/>
+                                            <Setter Property="Grid.ColumnSpan" Value="3"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                    <Setter Property="Grid.Row" Value="0"/>
+                                                    <Setter Property="Grid.Column" Value="0"/>
+                                                    <Setter Property="Grid.ColumnSpan" Value="1"/>
+                                                    <Setter Property="Grid.RowSpan" Value="3"/>
+                                                    <Setter Property="Margin" Value="5"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
 
-                                        <!-- Manifest Status Badge -->
-                                        <Border Background="{DynamicResource AccentBrush}"
-                                                CornerRadius="4"
-                                                Padding="8,4"
-                                                HorizontalAlignment="Right"
-                                                VerticalAlignment="Top"
-                                                Margin="8"
-                                                Visibility="{Binding ManifestAvailable, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <TextBlock Text="✓ Available"
-                                                       Foreground="White"
-                                                       FontSize="10"
-                                                       FontWeight="Bold"/>
-                                        </Border>
+                                    <!-- Game Image -->
+                                    <Border Background="{DynamicResource SecondaryDarkBrush}"
+                                            CornerRadius="8">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Width" Value="280"/>
+                                                <Setter Property="Height" Value="160"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                        <Setter Property="Width" Value="180"/>
+                                                        <Setter Property="Height" Value="100"/>
+                                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <!-- Show cached icon if available -->
+                                            <Image Source="{Binding CachedIconPath}"
+                                                   Stretch="Uniform"
+                                                   Visibility="{Binding CachedIconPath, Converter={StaticResource NullToVisibilityConverter}}"/>
 
-                                        <Border Background="#CC666666"
-                                                CornerRadius="4"
-                                                Padding="8,4"
-                                                HorizontalAlignment="Right"
-                                                VerticalAlignment="Top"
-                                                Margin="8"
-                                                Visibility="{Binding ManifestAvailable, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                                            <TextBlock Text="⏳ Pending"
-                                                       Foreground="White"
-                                                       FontSize="10"
-                                                       FontWeight="Bold"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
+                                            <!-- Placeholder if no icon -->
+                                            <TextBlock Text="🎮"
+                                                       FontSize="64"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource AccentBrush}"
+                                                       Visibility="{Binding CachedIconPath, Converter={StaticResource InverseNullToVisibilityConverter}}"/>
+                                        </Grid>
+                                    </Border>
 
-                                <!-- Game Info -->
-                                <StackPanel Grid.Row="1" Margin="10">
+                                    <!-- Manifest Status Badge (Grid View only - overlaid on image) -->
+                                    <Border CornerRadius="4"
+                                            Padding="8,4"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            Margin="8">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False"/>
+                                                            <Condition Binding="{Binding ManifestAvailable}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                                    </MultiDataTrigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False"/>
+                                                            <Condition Binding="{Binding ManifestAvailable}" Value="False"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Setter Property="Background" Value="#CC666666"/>
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock FontSize="10"
+                                                   FontWeight="Bold"
+                                                   Foreground="White">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ManifestAvailable}" Value="True">
+                                                            <Setter Property="Text" Value="✓ Available"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding ManifestAvailable}" Value="False">
+                                                            <Setter Property="Text" Value="⏳ Pending"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Game Info (Grid View) -->
+                                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,8,10,5"
+                                            Visibility="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                                     <TextBlock Text="{Binding GameName}"
-                                               FontSize="16"
+                                               FontSize="15"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
-                                               TextTrimming="CharacterEllipsis"
                                                TextWrapping="Wrap"
-                                               MaxHeight="40"/>
+                                               MaxHeight="60"
+                                               TextTrimming="CharacterEllipsis"/>
+
                                     <TextBlock Text="{Binding GameId, StringFormat='App ID: {0}'}"
                                                FontSize="11"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                Margin="0,5,0,0"/>
-                                    <TextBlock Text="{Binding UploadedDate, StringFormat='Added: {0:MMM d, yyyy}'}"
-                                               FontSize="11"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Margin="0,3,0,0"/>
-                                    <TextBlock Text="{Binding ManifestSize, StringFormat='Size: {0:N0} bytes', TargetNullValue='Size: Unknown'}"
-                                               FontSize="11"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Margin="0,3,0,0"
-                                               Visibility="{Binding ManifestAvailable, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                 </StackPanel>
 
-                                <!-- Download Button -->
-                                <Button Grid.Row="2"
-                                        Content="⬇️ Download"
+                                <!-- Game Info (List View) -->
+                                <StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" Margin="10" VerticalAlignment="Center" Orientation="Horizontal"
+                                            Visibility="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <!-- Status Badge (List View - before name) -->
+                                    <Border CornerRadius="4"
+                                            Padding="6,3"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,10,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ManifestAvailable}" Value="True">
+                                                        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding ManifestAvailable}" Value="False">
+                                                        <Setter Property="Background" Value="#CC666666"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock FontSize="10"
+                                                   FontWeight="Bold"
+                                                   Foreground="White">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ManifestAvailable}" Value="True">
+                                                            <Setter Property="Text" Value="✓ Available"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding ManifestAvailable}" Value="False">
+                                                            <Setter Property="Text" Value="⏳ Pending"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+
+                                    <TextBlock Text="{Binding GameName}"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               TextWrapping="NoWrap"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center"
+                                               MinWidth="200"
+                                               Margin="0,0,15,0"/>
+
+                                    <TextBlock Text="{Binding GameId, StringFormat='App ID: {0}'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,15,0"/>
+
+                                    <TextBlock Text="{Binding UploadedDate, StringFormat='Added: {0:MMM d}'}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,15,0"/>
+
+                                    <TextBlock Text="{Binding ManifestSize, Converter={StaticResource BytesToStringConverter}, TargetNullValue='Unknown'}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- Bottom Section (Grid View) - Pinned to bottom -->
+                                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,5,10,10"
+                                            Visibility="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                    <TextBlock FontSize="10"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Margin="0,0,0,8"
+                                               HorizontalAlignment="Center">
+                                        <Run Text="{Binding ManifestSize, Converter={StaticResource BytesToStringConverter}, TargetNullValue='Unknown'}"/>
+                                        <Run Text=" | "/>
+                                        <Run Text="{Binding UploadedDate, StringFormat='Added: {0:MMM d}'}"/>
+                                    </TextBlock>
+
+                                    <Button Content="⬇️ Download"
+                                            Command="{Binding DataContext.DownloadGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            IsEnabled="{Binding ManifestAvailable}"/>
+                                </StackPanel>
+
+                                <!-- Download Button (List View) -->
+                                <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="3" Content="⬇️ Download"
                                         Command="{Binding DataContext.DownloadGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"
+                                        VerticalAlignment="Center"
+                                        Padding="15,8"
                                         Margin="10"
-                                        IsEnabled="{Binding ManifestAvailable}"/>
+                                        IsEnabled="{Binding ManifestAvailable}"
+                                        Visibility="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             </Grid>
                         </Border>
                     </DataTemplate>

@@ -1,18 +1,17 @@
 using SolusManifestApp.Helpers;
-using SolusManifestApp.Models;
+using SolusManifestApp.Views.Dialogs;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace SolusManifestApp.Views.Dialogs
 {
-    public partial class UpdateEnablerDialog : Window
+    public partial class UpdateDisablerDialog : Window
     {
         public List<SelectableApp> Apps { get; set; }
         public List<SelectableApp> SelectedApps { get; private set; }
 
-        public UpdateEnablerDialog(List<SelectableApp> apps)
+        public UpdateDisablerDialog(List<SelectableApp> apps)
         {
             InitializeComponent();
             Apps = apps;
@@ -42,7 +41,7 @@ namespace SolusManifestApp.Views.Dialogs
 
             if (SelectedApps.Count == 0)
             {
-                MessageBoxHelper.Show("Please select at least one app to enable updates for.",
+                MessageBoxHelper.Show("Please select at least one app to disable updates for.",
                     "No Selection",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
@@ -71,21 +70,6 @@ namespace SolusManifestApp.Views.Dialogs
         {
             DialogResult = false;
             Close();
-        }
-    }
-
-    public class SelectableApp : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
-    {
-        private bool _isSelected;
-
-        public string AppId { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public bool IsUpdateEnabled { get; set; } = false;
-
-        public bool IsSelected
-        {
-            get => _isSelected;
-            set => SetProperty(ref _isSelected, value);
         }
     }
 }

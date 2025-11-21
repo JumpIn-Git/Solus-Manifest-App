@@ -38,9 +38,6 @@ namespace SolusManifestApp.ViewModels
         private string _apiKey = string.Empty;
 
         [ObservableProperty]
-        private string _steamWebApiKey = string.Empty;
-
-        [ObservableProperty]
         private string _downloadsPath = string.Empty;
 
         [ObservableProperty]
@@ -69,11 +66,18 @@ namespace SolusManifestApp.ViewModels
 
         [ObservableProperty]
         private bool _alwaysShowTrayIcon;
+
         [ObservableProperty]
         private bool _autoUploadConfigKeys;
 
         [ObservableProperty]
+        private bool _showGameAddedNotification;
+
+        [ObservableProperty]
         private int _storePageSize;
+
+        [ObservableProperty]
+        private int _libraryPageSize;
 
         [ObservableProperty]
         private bool _rememberWindowPosition;
@@ -178,6 +182,8 @@ namespace SolusManifestApp.ViewModels
         [ObservableProperty]
         private int _maxConcurrentDownloads;
 
+        public string CurrentVersion => _updateService.GetCurrentVersion();
+
         public bool ShowAdvancedNormalModeSettings => IsGreenLumaNormalMode && IsAdvancedNormalMode;
 
         // Mark as unsaved when properties change
@@ -189,12 +195,14 @@ namespace SolusManifestApp.ViewModels
         partial void OnMinimizeToTrayChanged(bool value) => MarkAsUnsaved();
         partial void OnAutoInstallAfterDownloadChanged(bool value) => MarkAsUnsaved();
         partial void OnShowNotificationsChanged(bool value) => MarkAsUnsaved();
+        partial void OnShowGameAddedNotificationChanged(bool value) => MarkAsUnsaved();
         partial void OnStartMinimizedChanged(bool value) => MarkAsUnsaved();
         partial void OnAlwaysShowTrayIconChanged(bool value) => MarkAsUnsaved();
         partial void OnAutoUploadConfigKeysChanged(bool value) => MarkAsUnsaved();
         partial void OnConfirmBeforeDeleteChanged(bool value) => MarkAsUnsaved();
         partial void OnConfirmBeforeUninstallChanged(bool value) => MarkAsUnsaved();
         partial void OnStorePageSizeChanged(int value) => MarkAsUnsaved();
+        partial void OnLibraryPageSizeChanged(int value) => MarkAsUnsaved();
         partial void OnRememberWindowPositionChanged(bool value) => MarkAsUnsaved();
         partial void OnWindowLeftChanged(double value) => MarkAsUnsaved();
         partial void OnWindowTopChanged(double value) => MarkAsUnsaved();
@@ -357,19 +365,20 @@ namespace SolusManifestApp.ViewModels
 
             SteamPath = Settings.SteamPath;
             ApiKey = Settings.ApiKey;
-            SteamWebApiKey = Settings.SteamWebApiKey;
             DownloadsPath = Settings.DownloadsPath;
             AutoCheckUpdates = Settings.AutoCheckUpdates;
             SelectedAutoUpdateMode = Settings.AutoUpdate.ToString();
             MinimizeToTray = Settings.MinimizeToTray;
             AutoInstallAfterDownload = Settings.AutoInstallAfterDownload;
             ShowNotifications = Settings.ShowNotifications;
+            ShowGameAddedNotification = Settings.ShowGameAddedNotification;
             StartMinimized = Settings.StartMinimized;
             AlwaysShowTrayIcon = Settings.AlwaysShowTrayIcon;
             AutoUploadConfigKeys = Settings.AutoUploadConfigKeys;
             ConfirmBeforeDelete = Settings.ConfirmBeforeDelete;
             ConfirmBeforeUninstall = Settings.ConfirmBeforeUninstall;
             StorePageSize = Settings.StorePageSize;
+            LibraryPageSize = Settings.LibraryPageSize;
             RememberWindowPosition = Settings.RememberWindowPosition;
             WindowLeft = Settings.WindowLeft;
             WindowTop = Settings.WindowTop;
@@ -461,7 +470,6 @@ namespace SolusManifestApp.ViewModels
         {
             Settings.SteamPath = SteamPath;
             Settings.ApiKey = ApiKey;
-            Settings.SteamWebApiKey = SteamWebApiKey;
             Settings.DownloadsPath = DownloadsPath;
             Settings.AutoCheckUpdates = AutoCheckUpdates;
 
@@ -474,12 +482,14 @@ namespace SolusManifestApp.ViewModels
             Settings.MinimizeToTray = MinimizeToTray;
             Settings.AutoInstallAfterDownload = AutoInstallAfterDownload;
             Settings.ShowNotifications = ShowNotifications;
+            Settings.ShowGameAddedNotification = ShowGameAddedNotification;
             Settings.StartMinimized = StartMinimized;
             Settings.AlwaysShowTrayIcon = AlwaysShowTrayIcon;
             Settings.AutoUploadConfigKeys = AutoUploadConfigKeys;
             Settings.ConfirmBeforeDelete = ConfirmBeforeDelete;
             Settings.ConfirmBeforeUninstall = ConfirmBeforeUninstall;
             Settings.StorePageSize = StorePageSize;
+            Settings.LibraryPageSize = LibraryPageSize;
             Settings.RememberWindowPosition = RememberWindowPosition;
             Settings.WindowLeft = WindowLeft;
             Settings.WindowTop = WindowTop;
@@ -653,8 +663,14 @@ namespace SolusManifestApp.ViewModels
                 {
                     StatusMessage = "API key is valid";
                     _notificationService.ShowSuccess("API key is valid!");
-                    _settingsService.AddApiKeyToHistory(ApiKey);
-                    LoadSettings(); // Refresh history
+
+                    // Save current API key before refreshing
+                    var currentApiKey = ApiKey;
+                    _settingsService.AddApiKeyToHistory(currentApiKey);
+
+                    // Reload settings and restore the current API key
+                    LoadSettings();
+                    ApiKey = currentApiKey;
                 }
                 else
                 {

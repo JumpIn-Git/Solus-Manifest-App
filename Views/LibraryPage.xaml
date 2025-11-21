@@ -16,6 +16,8 @@
             <!-- Batch Actions Bar -->
             <RowDefinition Height="*"/>
             <!-- Content -->
+            <RowDefinition Height="Auto"/>
+            <!-- Pagination -->
         </Grid.RowDefinitions>
 
         <!-- Header with Statistics -->
@@ -120,6 +122,12 @@
                         Margin="0,0,10,0"
                         ToolTip="Comment out all setManifestid lines to enable auto-updates (SteamTools mode only)"
                         Visibility="{Binding IsSteamToolsMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <Button Content="⬆ Auto-Update Disabler"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding DisableAutoUpdatesCommand}"
+                        Margin="0,0,10,0"
+                        ToolTip="Uncomment all setManifestid lines to disable auto-updates (SteamTools mode only)"
+                        Visibility="{Binding IsSteamToolsMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 <Button Content="🔄 Restart Steam"
                         Style="{StaticResource SecondaryButtonStyle}"
                         Command="{Binding RestartSteamCommand}"/>
@@ -129,7 +137,8 @@
         <!-- Search and Filters -->
         <Grid Grid.Row="1" Margin="0,0,0,20">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="400"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
@@ -139,8 +148,8 @@
             <TextBox Grid.Column="0"
                      Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
                      FontSize="13"
-                     Height="46"
-                     Padding="12,0"
+                     Height="32"
+                     Padding="10,0"
                      VerticalContentAlignment="Center"
                      Margin="0,0,10,0">
                 <TextBox.Resources>
@@ -186,8 +195,24 @@
                       Padding="8,3"
                       FontSize="12"/>
 
-            <!-- Select Mode Toggle -->
+            <!-- View Toggle -->
             <Button Grid.Column="3"
+                    Command="{Binding ToggleViewCommand}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Height="28"
+                    Padding="10,3"
+                    Margin="0,0,10,0">
+                <Button.Content>
+                    <TextBlock>
+                        <Run Text="{Binding IsListView, Converter={StaticResource BoolToViewIconConverter}, Mode=OneWay}"/>
+                        <Run Text=" "/>
+                        <Run Text="{Binding IsListView, Converter={StaticResource BoolToViewTextConverter}, Mode=OneWay}"/>
+                    </TextBlock>
+                </Button.Content>
+            </Button>
+
+            <!-- Select Mode Toggle -->
+            <Button Grid.Column="4"
                     Content="☑ Select Mode"
                     Style="{StaticResource SecondaryButtonStyle}"
                     Command="{Binding ToggleSelectModeCommand}"
@@ -226,23 +251,52 @@
             </Grid>
         </Border>
 
-        <!-- Games Grid -->
+        <!-- Games Grid/List -->
         <ScrollViewer Grid.Row="3"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
             <ItemsControl ItemsSource="{Binding DisplayedItems}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
+                <ItemsControl.Style>
+                    <Style TargetType="ItemsControl">
+                        <Setter Property="ItemsPanel">
+                            <Setter.Value>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsListView}" Value="True">
+                                <Setter Property="ItemsPanel">
+                                    <Setter.Value>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Vertical"/>
+                                        </ItemsPanelTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ItemsControl.Style>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Style="{StaticResource ModernCardStyle}"
-                                Width="280"
-                                Height="360"
-                                Margin="0,0,20,20"
-                                Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                        <Border Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource ModernCardStyle}">
+                                    <Setter Property="Width" Value="280"/>
+                                    <Setter Property="Height" Value="350"/>
+                                    <Setter Property="Margin" Value="0,0,20,20"/>
+                                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                            <Setter Property="Width" Value="Auto"/>
+                                            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                            <Setter Property="Height" Value="100"/>
+                                            <Setter Property="Margin" Value="0,0,0,10"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Border.ContextMenu>
                                 <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
                                     <MenuItem Header="📋 View Details"
@@ -260,87 +314,201 @@
 
                             <Grid>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="160"/>
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <!-- Game Image -->
-                                <Border Grid.Row="0"
-                                        Background="{DynamicResource SecondaryDarkBrush}"
-                                        CornerRadius="8">
-                                    <Grid>
-                                        <!-- Show cached icon if available -->
-                                        <Image Source="{Binding CachedIconPath, Converter={StaticResource ImagePathConverter}}"
-                                               Stretch="Uniform"
-                                               Visibility="{Binding CachedIconPath, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                                        <!-- Placeholder if no icon -->
-                                        <TextBlock Text="🎮"
-                                                   FontSize="64"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource AccentBrush}"
-                                                   Visibility="{Binding CachedIconPath, Converter={StaticResource InverseNullToVisibilityConverter}}"/>
+                                <!-- Game Image Container -->
+                                <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Setter Property="Grid.Row" Value="0"/>
+                                            <Setter Property="Grid.Column" Value="0"/>
+                                            <Setter Property="Grid.ColumnSpan" Value="3"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                    <Setter Property="Grid.Row" Value="0"/>
+                                                    <Setter Property="Grid.Column" Value="0"/>
+                                                    <Setter Property="Grid.ColumnSpan" Value="1"/>
+                                                    <Setter Property="Grid.RowSpan" Value="3"/>
+                                                    <Setter Property="Margin" Value="5"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
 
-                                        <!-- Type Badge -->
-                                        <Border Background="{DynamicResource AccentBrush}"
-                                                Padding="8,4"
-                                                CornerRadius="4"
-                                                HorizontalAlignment="Right"
-                                                VerticalAlignment="Top"
-                                                Margin="8">
-                                            <TextBlock Text="{Binding TypeBadge}"
-                                                       FontSize="10"
-                                                       FontWeight="Bold"
-                                                       Foreground="White"/>
-                                        </Border>
+                                    <!-- Game Image -->
+                                    <Border Background="{DynamicResource SecondaryDarkBrush}"
+                                            CornerRadius="8">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Width" Value="280"/>
+                                                <Setter Property="Height" Value="160"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                        <Setter Property="Width" Value="180"/>
+                                                        <Setter Property="Height" Value="100"/>
+                                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <!-- Show cached BitmapImage if available (optimized) -->
+                                            <Image Source="{Binding CachedBitmapImage}"
+                                                   Stretch="Uniform"
+                                                   RenderOptions.BitmapScalingMode="LowQuality"
+                                                   Visibility="{Binding CachedBitmapImage, Converter={StaticResource NullToVisibilityConverter}}"/>
 
-                                        <!-- Checkbox for Select Mode -->
-                                        <CheckBox IsChecked="{Binding IsSelected}"
-                                                  HorizontalAlignment="Left"
-                                                  VerticalAlignment="Top"
-                                                  Margin="10"
-                                                  Visibility="{Binding DataContext.IsSelectMode, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                    </Grid>
-                                </Border>
+                                            <!-- Show from file path as fallback if BitmapImage not yet loaded -->
+                                            <Image Source="{Binding CachedIconPath, Converter={StaticResource ImagePathConverter}}"
+                                                   Stretch="Uniform"
+                                                   RenderOptions.BitmapScalingMode="LowQuality"
+                                                   Visibility="{Binding CachedBitmapImage, Converter={StaticResource InverseNullToVisibilityConverter}}"/>
 
-                                <!-- Game Info -->
-                                <StackPanel Grid.Row="1" Margin="10">
+                                            <!-- Placeholder if no icon at all -->
+                                            <TextBlock Text="🎮"
+                                                       FontSize="64"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource AccentBrush}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding CachedBitmapImage, Converter={StaticResource NullToVisibilityConverter}}" Value="Collapsed"/>
+                                                                    <Condition Binding="{Binding CachedIconPath, Converter={StaticResource NullToVisibilityConverter}}" Value="Collapsed"/>
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Type Badge (Grid View only - overlaid on image) -->
+                                    <Border Background="{DynamicResource AccentBrush}"
+                                            Padding="8,4"
+                                            CornerRadius="4"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            Margin="8"
+                                            Visibility="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                        <TextBlock Text="{Binding TypeBadge}"
+                                                   FontSize="10"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"/>
+                                    </Border>
+
+                                    <!-- Checkbox for Select Mode -->
+                                    <CheckBox IsChecked="{Binding IsSelected}"
+                                              HorizontalAlignment="Left"
+                                              VerticalAlignment="Top"
+                                              Margin="10"
+                                              Visibility="{Binding DataContext.IsSelectMode, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                </Grid>
+
+                                <!-- Game Info (Grid View) -->
+                                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,8,10,5"
+                                            Visibility="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                                     <TextBlock Text="{Binding Name}"
-                                               FontSize="16"
+                                               FontSize="15"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
-                                               TextTrimming="CharacterEllipsis"
                                                TextWrapping="Wrap"
-                                               MaxHeight="40"/>
+                                               MaxHeight="60"
+                                               TextTrimming="CharacterEllipsis"/>
 
                                     <TextBlock Text="{Binding AppId, StringFormat='App ID: {0}'}"
                                                FontSize="11"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Margin="0,8,0,0"/>
+                                               Margin="0,5,0,0"/>
+                                </StackPanel>
+
+                                <!-- Game Info (List View) -->
+                                <StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" Margin="10" VerticalAlignment="Center" Orientation="Horizontal"
+                                            Visibility="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <!-- Type Badge (List View - before name) -->
+                                    <Border Background="{DynamicResource AccentBrush}"
+                                            Padding="6,3"
+                                            CornerRadius="4"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,10,0">
+                                        <TextBlock Text="{Binding TypeBadge}"
+                                                   FontSize="10"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"/>
+                                    </Border>
+
+                                    <TextBlock Text="{Binding Name}"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               TextWrapping="NoWrap"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center"
+                                               MinWidth="200"
+                                               Margin="0,0,15,0"/>
+
+                                    <TextBlock Text="{Binding AppId, StringFormat='App ID: {0}'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,15,0"/>
 
                                     <TextBlock Text="{Binding SizeFormatted}"
-                                               FontSize="11"
+                                               FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Margin="0,3,0,0"/>
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,15,0"/>
 
                                     <TextBlock FontSize="11"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Margin="0,3,0,0"
+                                               VerticalAlignment="Center"
                                                Visibility="{Binding LastUpdated, Converter={StaticResource NullToVisibilityConverter}}">
                                         <Run Text="Updated:"/>
                                         <Run Text="{Binding LastUpdated, StringFormat='{}{0:yyyy-MM-dd}'}"/>
                                     </TextBlock>
                                 </StackPanel>
 
-                                <!-- Actions -->
-                                <Button Grid.Row="2"
-                                        Content="Uninstall"
+                                <!-- Bottom Section (Grid View) - Pinned to bottom -->
+                                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,5,10,10"
+                                            Visibility="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                    <TextBlock FontSize="10"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Margin="0,0,0,8"
+                                               HorizontalAlignment="Center">
+                                        <Run Text="{Binding SizeFormatted, Mode=OneWay}"/>
+                                        <Run Text=" | "/>
+                                        <Run Text="{Binding LastUpdated, StringFormat='Updated: {0:MMM d}', TargetNullValue='Not updated', Mode=OneWay}"/>
+                                    </TextBlock>
+
+                                    <Button Content="Uninstall"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            Command="{Binding DataContext.UninstallItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"/>
+                                </StackPanel>
+
+                                <!-- Actions (List View) -->
+                                <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="3" Content="Uninstall"
                                         Style="{StaticResource SecondaryButtonStyle}"
                                         Command="{Binding DataContext.UninstallItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"
-                                        Margin="10"/>
+                                        VerticalAlignment="Center"
+                                        Padding="15,8"
+                                        Margin="10"
+                                        Visibility="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -348,8 +516,41 @@
             </ItemsControl>
         </ScrollViewer>
 
+        <!-- Pagination Controls -->
+        <StackPanel Grid.Row="4"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    Margin="0,15,0,0">
+            <Button Content="⬅️ Previous Page"
+                    Command="{Binding PreviousPageCommand}"
+                    IsEnabled="{Binding CanGoPrevious}"
+                    Padding="20,10"
+                    FontSize="14"
+                    Margin="0,0,10,0"/>
+
+            <TextBlock Text="{Binding CurrentPage, StringFormat='Page {0} of'}"
+                       FontSize="14"
+                       Foreground="{DynamicResource TextPrimaryBrush}"
+                       VerticalAlignment="Center"
+                       Margin="10,0,5,0"/>
+
+            <TextBlock Text="{Binding TotalPages}"
+                       FontSize="14"
+                       Foreground="{DynamicResource TextPrimaryBrush}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,10,0"/>
+
+            <Button Content="Next Page ➡️"
+                    Command="{Binding NextPageCommand}"
+                    IsEnabled="{Binding CanGoNext}"
+                    Padding="20,10"
+                    FontSize="14"
+                    Margin="10,0,0,0"/>
+        </StackPanel>
+
         <!-- Loading Overlay -->
         <Grid Grid.Row="3"
+              Grid.RowSpan="2"
               Background="#AA000000"
               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel HorizontalAlignment="Center"

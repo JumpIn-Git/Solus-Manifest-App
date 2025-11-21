@@ -31,6 +31,7 @@ namespace SolusManifestApp.ViewModels
         private readonly LibraryDatabaseService _dbService;
         private readonly LibraryRefreshService _refreshService;
         private readonly RecentGamesService _recentGamesService;
+        private readonly ImageCacheService _imageCacheService;
 
         private List<LibraryItem> _allItems = new();
 
@@ -82,6 +83,25 @@ namespace SolusManifestApp.ViewModels
         [ObservableProperty]
         private ObservableCollection<string> _filterOptions = new();
 
+        [ObservableProperty]
+        private bool _isListView;
+
+        // Pagination properties
+        [ObservableProperty]
+        private int _currentPage = 1;
+
+        [ObservableProperty]
+        private int _totalPages = 1;
+
+        [ObservableProperty]
+        private int _itemsPerPage = 20;
+
+        [ObservableProperty]
+        private bool _canGoPrevious;
+
+        [ObservableProperty]
+        private bool _canGoNext;
+
         public List<string> SortOptions { get; } = new() { "Name", "Size", "Install Date", "Last Updated" };
 
         public LibraryViewModel(
@@ -113,14 +133,26 @@ namespace SolusManifestApp.ViewModels
             var stpluginPath = _steamService.GetStPluginPath() ?? "";
             _luaFileManager = new LuaFileManager(stpluginPath);
             _archiveExtractor = new ArchiveExtractionService();
+            _imageCacheService = new ImageCacheService(logger);
 
-            // Load Steam Web API key from settings
+            // Initialize Steam API service
             var settings = _settingsService.LoadSettings();
-            _steamApiService = new SteamApiService(_cacheService, settings.SteamWebApiKey);
+            _steamApiService = new SteamApiService(_cacheService);
+            IsListView = settings.LibraryListView;
+            ItemsPerPage = settings.LibraryPageSize;
 
             // Subscribe to library refresh events
             _refreshService.GameInstalled += OnGameInstalled;
             _refreshService.GreenLumaGameInstalled += OnGreenLumaGameInstalled;
+        }
+
+        [RelayCommand]
+        private void ToggleView()
+        {
+            IsListView = !IsListView;
+            var settings = _settingsService.LoadSettings();
+            settings.LibraryListView = IsListView;
+            _settingsService.SaveSettings(settings);
         }
 
         private async void OnGameInstalled(object? sender, GameInstalledEventArgs e)
@@ -153,6 +185,65 @@ namespace SolusManifestApp.ViewModels
         {
             ShowLua = SelectedFilter is "All" or "Lua Only" or "GreenLuma Only";
             ShowSteamGames = SelectedFilter is "All" or "Steam Games Only";
+        }
+
+        /// <summary>
+        /// Loads library from cache only (fast, instant load)
+        /// </summary>
+        public async Task LoadFromCache()
+        {
+            // Check mode for UI visibility
+            var settings = _settingsService.LoadSettings();
+            IsSteamToolsMode = settings.Mode == ToolMode.SteamTools;
+            IsGreenLumaMode = settings.Mode == ToolMode.GreenLuma;
+
+            // Update filter options based on mode
+            FilterOptions.Clear();
+            FilterOptions.Add("All");
+            if (IsGreenLumaMode)
+            {
+                FilterOptions.Add("GreenLuma Only");
+            }
+            else
+            {
+                FilterOptions.Add("Lua Only");
+            }
+            FilterOptions.Add("Steam Games Only");
+
+            // Reset filter to "All" if current filter doesn't exist in new options
+            if (!FilterOptions.Contains(SelectedFilter))
+            {
+                SelectedFilter = "All";
+            }
+
+            // Load from database cache (any age)
+            var cachedItems = _dbService.GetAllLibraryItems();
+
+            if (cachedItems.Count > 0)
+            {
+                _allItems = cachedItems;
+
+                // Update statistics
+                TotalLua = _allItems.Count(i => i.ItemType == LibraryItemType.Lua);
+                TotalSteamGames = _allItems.Count(i => i.ItemType == LibraryItemType.SteamGame);
+                TotalGreenLuma = _allItems.Count(i => i.ItemType == LibraryItemType.GreenLuma);
+                TotalSize = _allItems.Sum(i => i.SizeBytes);
+
+                ApplyFilters();
+                StatusMessage = $"{_allItems.Count} item(s) - Click 'Update Library' to refresh";
+
+                // Load missing icons AND cache BitmapImages in background
+                _ = LoadMissingIconsAsync();
+                _ = CacheImagesAsync();
+            }
+            else
+            {
+                StatusMessage = "Library is empty - Click 'Update Library' to scan";
+                _allItems.Clear();
+                ApplyFilters();
+            }
+
+            await Task.CompletedTask;
         }
 
         [RelayCommand]
@@ -213,8 +304,9 @@ namespace SolusManifestApp.ViewModels
                         StatusMessage = $"{_allItems.Count} item(s) loaded from cache";
                         IsLoading = false;
 
-                        // Load missing icons in background
+                        // Load missing icons AND cache BitmapImages in background
                         _ = LoadMissingIconsAsync();
+                        _ = CacheImagesAsync();
                         return;
                     }
                     else
@@ -752,17 +844,80 @@ namespace SolusManifestApp.ViewModels
 
                 var filteredList = filtered.ToList();
 
-                // Update UI on UI thread - but reuse existing collection
+                // Update UI on UI thread
                 Application.Current.Dispatcher.Invoke(() =>
                 {
+                    // Handle pagination
+                    List<LibraryItem> pagedItems;
+
+                    if (ItemsPerPage <= 0)
+                    {
+                        // Show all items (no pagination)
+                        pagedItems = filteredList;
+                        TotalPages = 1;
+                        CurrentPage = 1;
+                    }
+                    else
+                    {
+                        // Calculate pagination
+                        TotalPages = (int)Math.Ceiling((double)filteredList.Count / ItemsPerPage);
+                        if (TotalPages == 0) TotalPages = 1;
+
+                        // Ensure current page is within bounds
+                        if (CurrentPage > TotalPages)
+                            CurrentPage = TotalPages;
+                        if (CurrentPage < 1)
+                            CurrentPage = 1;
+
+                        // Get items for current page
+                        pagedItems = filteredList
+                            .Skip((CurrentPage - 1) * ItemsPerPage)
+                            .Take(ItemsPerPage)
+                            .ToList();
+                    }
+
+                    // Update displayed items
                     DisplayedItems.Clear();
-                    foreach (var item in filteredList)
+                    foreach (var item in pagedItems)
                     {
                         DisplayedItems.Add(item);
                     }
-                    StatusMessage = $"{DisplayedItems.Count} of {_allItems.Count} item(s)";
+
+                    // Update pagination state
+                    CanGoPrevious = CurrentPage > 1;
+                    CanGoNext = CurrentPage < TotalPages;
+
+                    // Update status message
+                    if (ItemsPerPage <= 0)
+                    {
+                        StatusMessage = $"{filteredList.Count} of {_allItems.Count} item(s)";
+                    }
+                    else
+                    {
+                        StatusMessage = $"Page {CurrentPage} of {TotalPages}: Showing {DisplayedItems.Count} of {filteredList.Count} filtered item(s) ({_allItems.Count} total)";
+                    }
                 });
             });
+        }
+
+        [RelayCommand]
+        private void NextPage()
+        {
+            if (CanGoNext)
+            {
+                CurrentPage++;
+                ApplyFilters();
+            }
+        }
+
+        [RelayCommand]
+        private void PreviousPage()
+        {
+            if (CanGoPrevious)
+            {
+                CurrentPage--;
+                ApplyFilters();
+            }
         }
 
         [RelayCommand]
@@ -1247,7 +1402,12 @@ namespace SolusManifestApp.ViewModels
                     _archiveExtractor.CleanupTempDirectory(tempDir);
                 }
 
-                _notificationService.ShowSuccess($"Successfully added {copiedCount} file(s)! Restart Steam for changes to take effect.");
+                // Only show notification if user hasn't disabled it
+                var settings = _settingsService.LoadSettings();
+                if (settings.ShowGameAddedNotification)
+                {
+                    _notificationService.ShowSuccess($"Successfully added {copiedCount} file(s)! Restart Steam for changes to take effect.");
+                }
 
                 // Add games to library instantly instead of full refresh
                 foreach (var appId in installedAppIds)
@@ -1282,19 +1442,32 @@ namespace SolusManifestApp.ViewModels
                     return;
                 }
 
-                // Build list of apps
+                // Build list of apps that currently have updates disabled
                 var selectableApps = new List<SelectableApp>();
                 foreach (var luaFile in luaFiles)
                 {
                     var appId = _luaFileManager.ExtractAppId(luaFile);
-                    var name = await _steamApiService.GetGameNameAsync(appId) ?? $"App {appId}";
+                    bool isEnabled = _luaFileManager.IsAutoUpdatesEnabled(appId);
 
-                    selectableApps.Add(new SelectableApp
+                    // Only show apps that have updates disabled
+                    if (!isEnabled)
                     {
-                        AppId = appId,
-                        Name = name,
-                        IsSelected = false
-                    });
+                        var name = await _steamApiService.GetGameNameAsync(appId) ?? $"App {appId}";
+
+                        selectableApps.Add(new SelectableApp
+                        {
+                            AppId = appId,
+                            Name = name,
+                            IsSelected = false,
+                            IsUpdateEnabled = isEnabled
+                        });
+                    }
+                }
+
+                if (selectableApps.Count == 0)
+                {
+                    _notificationService.ShowWarning("All games already have auto-updates enabled");
+                    return;
                 }
 
                 // Show dialog
@@ -1333,25 +1506,100 @@ namespace SolusManifestApp.ViewModels
         }
 
         [RelayCommand]
+        private async Task DisableAutoUpdates()
+        {
+            // Check if in SteamTools mode
+            var settings = _settingsService.LoadSettings();
+            if (settings.Mode != ToolMode.SteamTools)
+            {
+                _notificationService.ShowWarning("Auto-Update Disabler is only available in SteamTools mode");
+                return;
+            }
+
+            try
+            {
+                // Get all .lua files
+                var (luaFiles, _) = _luaFileManager.FindLuaFiles();
+                if (luaFiles.Count == 0)
+                {
+                    _notificationService.ShowWarning("No .lua files found");
+                    return;
+                }
+
+                // Build list of apps that currently have updates enabled
+                var selectableApps = new List<SelectableApp>();
+                foreach (var luaFile in luaFiles)
+                {
+                    var appId = _luaFileManager.ExtractAppId(luaFile);
+                    bool isEnabled = _luaFileManager.IsAutoUpdatesEnabled(appId);
+
+                    // Only show apps that have updates enabled
+                    if (isEnabled)
+                    {
+                        var name = await _steamApiService.GetGameNameAsync(appId) ?? $"App {appId}";
+
+                        selectableApps.Add(new SelectableApp
+                        {
+                            AppId = appId,
+                            Name = name,
+                            IsSelected = false,
+                            IsUpdateEnabled = isEnabled
+                        });
+                    }
+                }
+
+                if (selectableApps.Count == 0)
+                {
+                    _notificationService.ShowWarning("All games already have auto-updates disabled");
+                    return;
+                }
+
+                // Show dialog
+                var dialog = new UpdateDisablerDialog(selectableApps);
+                var result = dialog.ShowDialog();
+
+                if (result == true && dialog.SelectedApps.Count > 0)
+                {
+                    // Disable updates for selected apps
+                    int successCount = 0;
+                    int failCount = 0;
+
+                    foreach (var app in dialog.SelectedApps)
+                    {
+                        var (success, _) = _luaFileManager.DisableAutoUpdatesForApp(app.AppId);
+                        if (success)
+                            successCount++;
+                        else
+                            failCount++;
+                    }
+
+                    if (failCount == 0)
+                    {
+                        _notificationService.ShowSuccess($"Successfully disabled auto-updates for {successCount} app(s)");
+                    }
+                    else
+                    {
+                        _notificationService.ShowWarning($"Disabled auto-updates for {successCount} app(s), {failCount} failed");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _notificationService.ShowError($"Failed to disable auto-updates: {ex.Message}");
+            }
+        }
+
+        [RelayCommand]
         private async Task UpdateSteamAppCache()
         {
             try
             {
-                // Check if API key is set
                 var settings = _settingsService.LoadSettings();
-                if (string.IsNullOrWhiteSpace(settings.SteamWebApiKey))
-                {
-                    _notificationService.ShowWarning("Steam Web API Key is not set. Please add it in Settings to use this feature.");
-                    return;
-                }
 
                 IsLoading = true;
                 StatusMessage = "Updating Steam app list cache...";
 
                 _logger.Info("Starting Steam app list cache update");
-
-                // Update the API key in the service (in case it changed)
-                _steamApiService.SetSteamWebApiKey(settings.SteamWebApiKey);
 
                 // Force refresh the app list from API
                 var result = await _steamApiService.GetAppListAsync(forceRefresh: true);
@@ -1376,6 +1624,56 @@ namespace SolusManifestApp.ViewModels
             {
                 IsLoading = false;
                 StatusMessage = $"{_allItems.Count} item(s) loaded";
+            }
+        }
+
+        /// <summary>
+        /// Caches BitmapImages in memory for all library items with available icon paths.
+        /// Runs asynchronously in background to improve Library page loading performance.
+        /// </summary>
+        private async Task CacheImagesAsync()
+        {
+            try
+            {
+                _logger.Info($"Starting image caching for {_allItems.Count} library items...");
+
+                var imagesToCache = new Dictionary<string, string>();
+
+                foreach (var item in _allItems)
+                {
+                    if (!string.IsNullOrEmpty(item.CachedIconPath) && File.Exists(item.CachedIconPath))
+                    {
+                        imagesToCache[item.AppId] = item.CachedIconPath;
+                    }
+                }
+
+                _logger.Info($"Found {imagesToCache.Count} images to cache");
+
+                // Pre-load all images into cache
+                await _imageCacheService.PreloadImagesAsync(imagesToCache);
+
+                // Update LibraryItem.CachedBitmapImage properties on UI thread
+                await Application.Current.Dispatcher.InvokeAsync(async () =>
+                {
+                    foreach (var item in _allItems)
+                    {
+                        if (imagesToCache.ContainsKey(item.AppId))
+                        {
+                            // Get cached image
+                            var bitmap = _imageCacheService.GetCachedImage(item.AppId);
+                            if (bitmap != null)
+                            {
+                                item.CachedBitmapImage = bitmap;
+                            }
+                        }
+                    }
+
+                    _logger.Info($"✓ Image caching complete! Cache size: {_imageCacheService.GetCacheSize()} images ({_imageCacheService.GetEstimatedMemoryUsageMB():F1} MB)");
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Error caching images: {ex.Message}");
             }
         }
     }

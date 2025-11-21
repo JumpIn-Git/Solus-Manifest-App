@@ -69,15 +69,42 @@
                         <!-- Manifest API Configuration -->
                         <Border Style="{StaticResource ModernCardStyle}" Margin="0,0,0,20">
                             <StackPanel>
-                                <TextBlock Text="API Key"
+                                <TextBlock Text="Solus API Key"
                                            FontSize="20"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                            Margin="0,0,0,15"/>
 
-                                <TextBlock Text="API Key (must start with 'smm')"
+                                <TextBlock Text="Solus API Key (must start with 'smm')"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            Margin="0,0,0,5"/>
+                                <TextBlock TextWrapping="Wrap"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           FontSize="11"
+                                           Margin="0,0,0,10">
+                                    <Run Text="How to get your Solus API key:"/>
+                                    <LineBreak/>
+                                    <Run Text="1. Go to "/>
+                                    <Hyperlink NavigateUri="https://manifest.morrenus.xyz/"
+                                               RequestNavigate="Hyperlink_RequestNavigate">
+                                        <Run Text="https://manifest.morrenus.xyz/"/>
+                                    </Hyperlink>
+                                    <Run Text=" and login with your Discord account"/>
+                                    <LineBreak/>
+                                    <Run Text="2. Generate your API key: Visit "/>
+                                    <Hyperlink NavigateUri="https://manifest.morrenus.xyz/api-keys/user"
+                                               RequestNavigate="Hyperlink_RequestNavigate">
+                                        <Run Text="https://manifest.morrenus.xyz/api-keys/user"/>
+                                    </Hyperlink>
+                                    <LineBreak/>
+                                    <Run Text="3. View pricing: "/>
+                                    <Hyperlink NavigateUri="https://manifest.morrenus.xyz/pricing"
+                                               RequestNavigate="Hyperlink_RequestNavigate">
+                                        <Run Text="https://manifest.morrenus.xyz/pricing"/>
+                                    </Hyperlink>
+                                    <LineBreak/>
+                                    <Run Text="4. Read the docs: Check the API documentation on the website"/>
+                                </TextBlock>
                                 <Grid Margin="0,0,0,10">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -103,27 +130,6 @@
                                           Margin="0,15,0,0"
                                           ToolTip="Extracts depot keys from your Steam config.vdf and uploads only new keys that don't already exist on the server. Runs automatically every hour while the app is open. Requires a valid API key."/>
 
-                                <!-- Steam Web API Key -->
-                                <Rectangle Fill="{DynamicResource BorderBrush}" Height="1" Margin="0,20,0,20"/>
-                                <TextBlock Text="Steam Web API Key (Optional)"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Margin="0,0,0,5"/>
-                                <TextBox Text="{Binding SteamWebApiKey, UpdateSourceTrigger=PropertyChanged}"
-                                         Margin="0,0,0,5"/>
-                                <TextBlock TextWrapping="Wrap"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           FontSize="11"
-                                           Margin="0,0,0,0">
-                                    <Run Text="Used to fetch the complete Steam app list for better game name resolution."/>
-                                    <LineBreak/>
-                                    <Run Text="Get your key at: "/>
-                                    <Hyperlink NavigateUri="https://steamcommunity.com/dev/apikey"
-                                               RequestNavigate="Hyperlink_RequestNavigate">
-                                        <Run Text="https://steamcommunity.com/dev/apikey"/>
-                                    </Hyperlink>
-                                    <LineBreak/>
-                                    <Run Text="If not provided, game names will be fetched from manifest cache and other sources."/>
-                                </TextBlock>
                             </StackPanel>
                         </Border>
 
@@ -167,6 +173,21 @@
                                     <ComboBoxItem Content="30 games" Tag="30"/>
                                     <ComboBoxItem Content="50 games" Tag="50"/>
                                     <ComboBoxItem Content="100 games" Tag="100"/>
+                                </ComboBox>
+
+                                <TextBlock Text="Library Page Size (items per page)"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="0,0,0,5"/>
+                                <ComboBox SelectedValue="{Binding LibraryPageSize}"
+                                          SelectedValuePath="Tag"
+                                          FontSize="14"
+                                          Padding="10,8"
+                                          Margin="0,0,0,10">
+                                    <ComboBoxItem Content="10 items" Tag="10"/>
+                                    <ComboBoxItem Content="20 items (default)" Tag="20"/>
+                                    <ComboBoxItem Content="50 items" Tag="50"/>
+                                    <ComboBoxItem Content="100 items" Tag="100"/>
+                                    <ComboBoxItem Content="Show all (no pagination)" Tag="0"/>
                                 </ComboBox>
 
                                 <TextBlock Text="Theme changes will be applied when you save settings"
@@ -822,6 +843,12 @@
                                           Margin="0,0,0,10"
                                           ToolTip="Show Windows toast notifications (when OFF, uses traditional message boxes)"/>
 
+                                <CheckBox Content="Show 'game added' notification"
+                                          IsChecked="{Binding ShowGameAddedNotification}"
+                                          Foreground="{DynamicResource TextPrimaryBrush}"
+                                          Margin="0,0,0,10"
+                                          ToolTip="Show notification when games are successfully added to library (disable to avoid repetitive popups)"/>
+
                                 <CheckBox Content="Confirm before deleting files"
                                           IsChecked="{Binding ConfirmBeforeDelete}"
                                           Foreground="{DynamicResource TextPrimaryBrush}"
@@ -876,9 +903,11 @@
                                            FontSize="12"
                                            Margin="0,0,0,15"/>
 
-                                <TextBlock Text="Current Version: 1.0.0"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Margin="0,0,0,10"/>
+                                <TextBlock Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="0,0,0,10">
+                                    <Run Text="Current Version: "/>
+                                    <Run Text="{Binding CurrentVersion, Mode=OneWay}"/>
+                                </TextBlock>
 
                                 <Button Content="Check for Updates Now"
                                         Command="{Binding CheckForUpdatesCommand}"

@@ -9,68 +9,97 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="20" MaxWidth="700" HorizontalAlignment="Left">
                 <!-- Active Account -->
-                <GroupBox Header="Active Account" Margin="0,0,0,5">
-                    <Grid Margin="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Account:" Grid.Column="0" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
-                        <ComboBox x:Name="AccountComboBox" Grid.Column="1"
-                                  SelectionChanged="AccountComboBox_SelectionChanged"
-                                  MinWidth="300"/>
-                    </Grid>
-                </GroupBox>
+                <Border Style="{StaticResource ModernCardStyle}" Margin="0,0,0,15">
+                    <StackPanel>
+                        <TextBlock Text="Active Account"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   Margin="0,0,0,10"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Account:" Grid.Column="0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
+                            <ComboBox x:Name="AccountComboBox" Grid.Column="1"
+                                      SelectionChanged="AccountComboBox_SelectionChanged"
+                                      MinWidth="300"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
 
                 <!-- App ID -->
-                <GroupBox Header="App ID" Margin="0,0,0,5">
-                    <Grid Margin="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Enter Steam App ID:" Grid.Column="0" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
-                        <TextBox x:Name="AppIdTextBox" Grid.Column="1"
-                                 Margin="0,0,10,0"
-                                 MinWidth="200"/>
-                        <Button Content="🔍 Search Game" Grid.Column="2"
-                                Click="SearchGameButton_Click"/>
-                    </Grid>
-                </GroupBox>
+                <Border Style="{StaticResource ModernCardStyle}" Margin="0,0,0,15">
+                    <StackPanel>
+                        <TextBlock Text="App ID"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   Margin="0,0,0,10"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Enter Steam App ID:" Grid.Column="0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
+                            <TextBox x:Name="AppIdTextBox" Grid.Column="1"
+                                     Margin="0,0,10,0"
+                                     MinWidth="200"/>
+                            <Button Content="🔍 Search Game" Grid.Column="2"
+                                    Click="SearchGameButton_Click"
+                                    Style="{StaticResource SecondaryButtonStyle}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
 
                 <!-- Usage Limit -->
-                <GroupBox Header="Usage Limit" Margin="0,0,0,5">
-                    <Grid Margin="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Select usage limit:" Grid.Column="0" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
-                        <ComboBox x:Name="UsageLimitComboBox" Grid.Column="1"
-                                  SelectedIndex="0"
-                                  MinWidth="150"/>
-                    </Grid>
-                </GroupBox>
+                <Border Style="{StaticResource ModernCardStyle}" Margin="0,0,0,15">
+                    <StackPanel>
+                        <TextBlock Text="Usage Limit"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   Margin="0,0,0,10"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Select usage limit:" Grid.Column="0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
+                            <ComboBox x:Name="UsageLimitComboBox" Grid.Column="1"
+                                      SelectedIndex="0"
+                                      MinWidth="150"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
 
                 <!-- Generate Button -->
                 <Button x:Name="GenerateButton"
                         Content="Generate Auth Code"
+                        Style="{StaticResource ModernButtonStyle}"
                         Height="40"
                         FontSize="13"
                         Click="GenerateButton_Click"
-                        Margin="0,0,0,5"/>
+                        Margin="0,0,0,15"/>
 
                 <!-- Result -->
-                <GroupBox Header="Result">
-                    <StackPanel Margin="5">
+                <Border Style="{StaticResource ModernCardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Result"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   Margin="0,0,0,10"/>
+
                         <TextBlock x:Name="StatusLabel" Text="Ready"
                                    HorizontalAlignment="Center"
                                    Foreground="{DynamicResource TextSecondaryBrush}"
-                                   Margin="0,0,0,5"/>
+                                   Margin="0,0,0,10"/>
 
                         <TextBlock x:Name="AuthCodeDisplay"
                                    FontSize="20"
@@ -78,16 +107,19 @@
                                    HorizontalAlignment="Center"
                                    Foreground="{DynamicResource AccentBrush}"
                                    MinHeight="30"
-                                   Margin="0,0,0,5"/>
+                                   Margin="0,0,0,10"/>
 
                         <TextBox x:Name="InfoTextBox"
                                  IsReadOnly="True"
                                  TextWrapping="Wrap"
                                  MinHeight="90"
                                  MaxHeight="110"
-                                 VerticalScrollBarVisibility="Auto"/>
+                                 VerticalScrollBarVisibility="Auto"
+                                 Background="{DynamicResource CardBackgroundBrush}"
+                                 Foreground="{DynamicResource TextPrimaryBrush}"
+                                 BorderBrush="{DynamicResource SecondaryDarkBrush}"/>
                     </StackPanel>
-                </GroupBox>
+                </Border>
             </StackPanel>
         </ScrollViewer>
     </Border>

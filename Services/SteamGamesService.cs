@@ -137,13 +137,39 @@ namespace SolusManifestApp.Services
                 var appId = VdfParser.GetValue(appState, "appid");
                 var name = VdfParser.GetValue(appState, "name");
                 var installDir = VdfParser.GetValue(appState, "installdir");
+
+                // Try multiple size fields - Steam uses different ones depending on state
                 var sizeOnDisk = VdfParser.GetLong(appState, "SizeOnDisk");
+                if (sizeOnDisk == 0)
+                {
+                    sizeOnDisk = VdfParser.GetLong(appState, "BytesDownloaded");
+                }
+                if (sizeOnDisk == 0)
+                {
+                    sizeOnDisk = VdfParser.GetLong(appState, "BytesToDownload");
+                }
+
                 var lastUpdated = VdfParser.GetLong(appState, "LastUpdated");
                 var stateFlags = VdfParser.GetValue(appState, "StateFlags");
                 var buildId = VdfParser.GetValue(appState, "buildid");
 
                 if (string.IsNullOrEmpty(appId) || string.IsNullOrEmpty(name))
                     return null;
+
+                var gamePath = Path.Combine(libraryPath, "steamapps", "common", installDir);
+
+                // If size is still 0 and game is installed, try calculating from folder
+                if (sizeOnDisk == 0 && Directory.Exists(gamePath))
+                {
+                    try
+                    {
+                        sizeOnDisk = CalculateFolderSize(gamePath);
+                    }
+                    catch
+                    {
+                        // Fallback failed, keep 0
+                    }
+                }
 
                 var game = new SteamGame
                 {
@@ -152,7 +178,7 @@ namespace SolusManifestApp.Services
                     InstallDir = installDir,
                     SizeOnDisk = sizeOnDisk,
                     LastUpdated = lastUpdated > 0 ? DateTimeOffset.FromUnixTimeSeconds(lastUpdated).DateTime : null,
-                    LibraryPath = Path.Combine(libraryPath, "steamapps", "common", installDir),
+                    LibraryPath = gamePath,
                     StateFlags = stateFlags,
                     IsFullyInstalled = stateFlags == "4", // StateFlag 4 = Fully Installed
                     BuildId = buildId
@@ -243,6 +269,38 @@ namespace SolusManifestApp.Services
             {
                 return false;
             }
+        }
+
+        private static long CalculateFolderSize(string folderPath)
+        {
+            if (!Directory.Exists(folderPath))
+                return 0;
+
+            long totalSize = 0;
+
+            try
+            {
+                // Calculate size of all files
+                var files = Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories);
+                foreach (var file in files)
+                {
+                    try
+                    {
+                        var fileInfo = new FileInfo(file);
+                        totalSize += fileInfo.Length;
+                    }
+                    catch
+                    {
+                        // Skip files we can't access
+                    }
+                }
+            }
+            catch
+            {
+                // Return what we have so far
+            }
+
+            return totalSize;
         }
     }
 }

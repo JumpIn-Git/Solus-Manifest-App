@@ -123,9 +123,8 @@ namespace SolusManifestApp.Services
         private readonly CacheService _cacheService;
         private SteamApiResponse? _cachedData;
         private readonly TimeSpan _cacheExpiration = TimeSpan.FromDays(7); // Cache for 7 days
-        private string? _steamWebApiKey;
 
-        public SteamApiService(CacheService cacheService, string? steamWebApiKey = null)
+        public SteamApiService(CacheService cacheService)
         {
             _httpClient = new HttpClient
             {
@@ -135,7 +134,6 @@ namespace SolusManifestApp.Services
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json, text/plain, */*");
             _cacheService = cacheService;
-            _steamWebApiKey = steamWebApiKey;
         }
 
         // For cases where CacheService is not available (backward compatibility)
@@ -148,12 +146,43 @@ namespace SolusManifestApp.Services
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json, text/plain, */*");
             _cacheService = new CacheService();
-            _steamWebApiKey = null;
         }
 
-        public void SetSteamWebApiKey(string? apiKey)
+        private async Task<SteamApiResponse?> GetAppListFromMorrenusApiAsync()
         {
-            _steamWebApiKey = apiKey;
+            try
+            {
+                var url = "https://applist.morrenus.xyz/";
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+
+                // The API returns a dictionary of appid -> name
+                var appDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+
+                if (appDict == null || appDict.Count == 0)
+                    return null;
+
+                // Convert to SteamApiResponse format
+                var apps = appDict.Select(kvp => new SteamApp
+                {
+                    AppId = int.TryParse(kvp.Key, out var id) ? id : 0,
+                    Name = kvp.Value
+                }).Where(a => a.AppId > 0).ToList();
+
+                return new SteamApiResponse
+                {
+                    AppList = new SteamAppList
+                    {
+                        Apps = apps
+                    }
+                };
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public async Task<SteamApiResponse?> GetAppListAsync(bool forceRefresh = false)
@@ -179,83 +208,39 @@ namespace SolusManifestApp.Services
                 }
             }
 
-            // If no API key provided, skip API call and return empty result
-            // The app will rely on manifest cache and other sources for game names
-            if (string.IsNullOrWhiteSpace(_steamWebApiKey))
-            {
-                // Try to return stale cache if available
-                var (cachedJson, _) = _cacheService.GetCachedSteamAppList();
-                if (!string.IsNullOrEmpty(cachedJson))
-                {
-                    try
-                    {
-                        _cachedData = JsonConvert.DeserializeObject<SteamApiResponse>(cachedJson);
-                        return _cachedData;
-                    }
-                    catch { }
-                }
-
-                // Return empty response - game names will come from other sources
-                return new SteamApiResponse
-                {
-                    AppList = new SteamAppList
-                    {
-                        Apps = new List<SteamApp>()
-                    }
-                };
-            }
-
-            // Fetch from API using new IStoreService endpoint
+            // Try new Morrenus applist API first (faster and no API key required)
             try
             {
-                // Note: The new endpoint uses paginated results
-                // We'll fetch all pages to get the complete list
-                var allApps = new List<SteamApp>();
-                int lastAppId = 0;
-                bool haveMoreResults = true;
-                int maxPages = 100; // Safety limit to prevent infinite loops
-                int pageCount = 0;
-
-                while (haveMoreResults && pageCount < maxPages)
+                var morrenusData = await GetAppListFromMorrenusApiAsync();
+                if (morrenusData != null)
                 {
-                    var url = lastAppId > 0
-                        ? $"https://api.steampowered.com/IStoreService/GetAppList/v1/?key={_steamWebApiKey}&include_games=true&include_dlc=true&max_results=50000&last_appid={lastAppId}"
-                        : $"https://api.steampowered.com/IStoreService/GetAppList/v1/?key={_steamWebApiKey}&include_games=true&include_dlc=true&max_results=50000";
-
-                    var response = await _httpClient.GetAsync(url);
-                    response.EnsureSuccessStatusCode();
-
-                    var json = await response.Content.ReadAsStringAsync();
-                    var pageData = JsonConvert.DeserializeObject<SteamApiResponse>(json);
-
-                    if (pageData?.Response?.Apps != null && pageData.Response.Apps.Count > 0)
-                    {
-                        // Convert SteamStoreApp to SteamApp
-                        foreach (var storeApp in pageData.Response.Apps)
-                        {
-                            allApps.Add(new SteamApp
-                            {
-                                AppId = storeApp.AppId,
-                                Name = storeApp.Name
-                            });
-                        }
-
-                        haveMoreResults = pageData.Response.HaveMoreResults;
-                        lastAppId = pageData.Response.LastAppId;
-                        pageCount++;
-                    }
-                    else
-                    {
-                        break;
-                    }
+                    _cachedData = morrenusData;
+                    var cacheJson = JsonConvert.SerializeObject(morrenusData);
+                    _cacheService.CacheSteamAppList(cacheJson);
+                    return morrenusData;
                 }
+            }
+            catch
+            {
+                // Fall through to Steam API if Morrenus API fails
+            }
 
-                // Build final response in old format for backward compatibility
+            // Fetch from Morrenus App List API
+            try
+            {
+                var url = "https://applist.morrenus.xyz";
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                var appList = JsonConvert.DeserializeObject<List<SteamApp>>(json);
+
+                // Build response in old format for backward compatibility
                 var data = new SteamApiResponse
                 {
                     AppList = new SteamAppList
                     {
-                        Apps = allApps
+                        Apps = appList ?? new List<SteamApp>()
                     }
                 };
 

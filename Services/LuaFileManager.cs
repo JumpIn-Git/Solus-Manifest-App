@@ -351,6 +351,95 @@ namespace SolusManifestApp.Services
             }
         }
 
+        public (bool success, string message) DisableAutoUpdatesForApp(string appId)
+        {
+            var luaFilePath = Path.Combine(_stpluginPath, $"{appId}.lua");
+            if (!File.Exists(luaFilePath))
+            {
+                return (false, $"Could not find {appId}.lua file");
+            }
+
+            try
+            {
+                var content = File.ReadAllText(luaFilePath);
+                var lines = content.Split('\n').ToList();
+                bool modified = false;
+
+                for (int i = 0; i < lines.Count; i++)
+                {
+                    var trimmed = lines[i].Trim();
+                    // If setManifestid is commented out, uncomment it
+                    if (trimmed.StartsWith("--setManifestid"))
+                    {
+                        lines[i] = lines[i].Replace("--setManifestid", "setManifestid");
+                        modified = true;
+                    }
+                }
+
+                if (modified)
+                {
+                    File.WriteAllText(luaFilePath, string.Join("\n", lines));
+                    return (true, $"Successfully disabled auto-updates for {appId}");
+                }
+
+                return (true, $"No changes needed for {appId}");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Failed to disable auto-updates for {appId}: {ex.Message}");
+            }
+        }
+
+        public bool IsAutoUpdatesEnabled(string appId)
+        {
+            var luaFilePath = Path.Combine(_stpluginPath, $"{appId}.lua");
+            if (!File.Exists(luaFilePath))
+            {
+                return false;
+            }
+
+            try
+            {
+                var content = File.ReadAllText(luaFilePath);
+                var lines = content.Split('\n');
+
+                // Check ALL setManifestid lines to determine state
+                bool hasCommented = false;
+                bool hasUncommented = false;
+
+                foreach (var line in lines)
+                {
+                    var trimmed = line.Trim();
+
+                    // Check for commented setManifestid
+                    if (trimmed.StartsWith("--setManifestid"))
+                    {
+                        hasCommented = true;
+                    }
+                    // Check for uncommented setManifestid
+                    else if (trimmed.StartsWith("setManifestid"))
+                    {
+                        hasUncommented = true;
+                    }
+                }
+
+                // Determine state based on what we found:
+                // If ANY uncommented setManifestid exists = updates DISABLED (manifest locked)
+                // If ALL setManifestid are commented = updates ENABLED (no manifest lock)
+                // If no setManifestid found at all = updates ENABLED (default behavior)
+                if (hasUncommented)
+                {
+                    return false; // Updates disabled (manifest is locked)
+                }
+
+                return true; // Updates enabled (all commented or none found)
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public List<string> GetDisabledUpdatesAppIds()
         {
             var disabledAppIds = new List<string>();

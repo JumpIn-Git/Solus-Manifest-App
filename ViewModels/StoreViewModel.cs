@@ -56,6 +56,9 @@ namespace SolusManifestApp.ViewModels
         [ObservableProperty]
         private bool _canGoPrevious;
 
+        [ObservableProperty]
+        private bool _isListView;
+
         private int PageSize => _settingsService.LoadSettings().StorePageSize;
 
         public StoreViewModel(
@@ -76,10 +79,20 @@ namespace SolusManifestApp.ViewModels
         private async Task InitializeAsync()
         {
             var settings = _settingsService.LoadSettings();
+            IsListView = settings.StoreListView;
             if (!string.IsNullOrEmpty(settings.ApiKey))
             {
                 await LoadGamesAsync();
             }
+        }
+
+        [RelayCommand]
+        private void ToggleView()
+        {
+            IsListView = !IsListView;
+            var settings = _settingsService.LoadSettings();
+            settings.StoreListView = IsListView;
+            _settingsService.SaveSettings(settings);
         }
 
         partial void OnSearchQueryChanged(string value)
