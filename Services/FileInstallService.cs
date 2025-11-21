@@ -97,13 +97,18 @@ namespace SolusManifestApp.Services
                     else
                     {
                         // SteamTools mode: Install .lua files to stplug-in
+                        _logger.Info("SteamTools mode: Installing .lua files to stplug-in");
                         var stpluginPath = _steamService.GetStPluginPath();
                         if (string.IsNullOrEmpty(stpluginPath))
                         {
+                            _logger.Error("Steam installation not found - stpluginPath is null or empty");
                             throw new Exception("Steam installation not found");
                         }
 
+                        _logger.Info($"stplug-in path: {stpluginPath}");
+
                         _steamService.EnsureStPluginDirectory();
+                        _logger.Debug("Ensured stplug-in directory exists");
 
                         foreach (var luaFile in luaFiles)
                         {
@@ -111,10 +116,12 @@ namespace SolusManifestApp.Services
                             var destPath = Path.Combine(stpluginPath, fileName);
 
                             progressCallback?.Invoke($"Installing {fileName}...");
+                            _logger.Info($"Installing {fileName} to: {destPath}");
 
                             // Remove existing file
                             if (File.Exists(destPath))
                             {
+                                _logger.Debug($"Removing existing file: {destPath}");
                                 File.Delete(destPath);
                             }
 
@@ -122,11 +129,14 @@ namespace SolusManifestApp.Services
                             var disabledPath = destPath + ".disabled";
                             if (File.Exists(disabledPath))
                             {
+                                _logger.Debug($"Removing disabled file: {disabledPath}");
                                 File.Delete(disabledPath);
                             }
 
                             // Copy file
+                            _logger.Debug($"Copying {luaFile} to {destPath}");
                             File.Copy(luaFile, destPath, true);
+                            _logger.Info($"Successfully installed: {fileName}");
                         }
                     }
 
@@ -192,20 +202,28 @@ namespace SolusManifestApp.Services
         {
             try
             {
+                _logger.Info($"InstallLuaFileAsync called with: {luaPath}");
+
                 var stpluginPath = _steamService.GetStPluginPath();
                 if (string.IsNullOrEmpty(stpluginPath))
                 {
+                    _logger.Error("Steam installation not found - stpluginPath is null or empty");
                     throw new Exception("Steam installation not found");
                 }
 
+                _logger.Info($"stplug-in path: {stpluginPath}");
+
                 _steamService.EnsureStPluginDirectory();
+                _logger.Debug("Ensured stplug-in directory exists");
 
                 var fileName = Path.GetFileName(luaPath);
                 var destPath = Path.Combine(stpluginPath, fileName);
+                _logger.Info($"Installing lua file to: {destPath}");
 
                 // Remove existing file
                 if (File.Exists(destPath))
                 {
+                    _logger.Debug($"Removing existing file: {destPath}");
                     File.Delete(destPath);
                 }
 
@@ -213,16 +231,20 @@ namespace SolusManifestApp.Services
                 var disabledPath = destPath + ".disabled";
                 if (File.Exists(disabledPath))
                 {
+                    _logger.Debug($"Removing disabled file: {disabledPath}");
                     File.Delete(disabledPath);
                 }
 
                 // Copy file
+                _logger.Debug($"Copying {luaPath} to {destPath}");
                 await Task.Run(() => File.Copy(luaPath, destPath, true));
+                _logger.Info($"Successfully installed lua file: {fileName}");
 
                 return true;
             }
             catch (Exception ex)
             {
+                _logger.Error($"Installation failed: {ex.Message}");
                 throw new Exception($"Installation failed: {ex.Message}", ex);
             }
         }
