@@ -60,18 +60,18 @@ namespace SolusManifestApp.Services
                 App.Current.Dispatcher.BeginInvoke(() =>
                     downloadItem.StatusMessage = "Checking server status...");
 
-                Console.WriteLine($"[DEBUG] Checking status for app {appId}...");
+                _logger.Debug($"Checking status for app {appId}...");
                 var status = await _manifestApiService.GetGameStatusAsync(appId, apiKey);
-                Console.WriteLine($"[DEBUG] Status result: UpdateInProgress={status?.UpdateInProgress}, Status={status?.Status}");
+                _logger.Debug($"Status result: UpdateInProgress={status?.UpdateInProgress}, Status={status?.Status}");
 
                 if (status == null || status.UpdateInProgress != true)
                 {
-                    Console.WriteLine($"[DEBUG] Server is ready, continuing with download");
+                    _logger.Debug("Server is ready, continuing with download");
                     // Server is ready (null or false means not updating)
                     return;
                 }
 
-                Console.WriteLine($"[DEBUG] Server is updating, waiting 5 seconds before next check...");
+                _logger.Debug("Server is updating, waiting 5 seconds before next check...");
                 // Server is updating, wait and poll again
                 App.Current.Dispatcher.BeginInvoke(() =>
                     downloadItem.StatusMessage = "Server updating manifest, waiting...");
@@ -179,7 +179,7 @@ namespace SolusManifestApp.Services
                     using (response)
                     {
                         var totalBytes = response.Content.Headers.ContentLength ?? manifest.Size;
-                        Console.WriteLine($"[DEBUG] Download started - Total bytes: {totalBytes}");
+                        _logger.Debug($"Download started - Total bytes: {totalBytes}");
                         App.Current.Dispatcher.BeginInvoke(() =>
                         {
                             downloadItem.TotalBytes = totalBytes;
@@ -195,7 +195,7 @@ namespace SolusManifestApp.Services
                         int bytesRead;
                         var lastUpdate = DateTime.Now;
 
-                        Console.WriteLine($"[DEBUG] Starting download loop...");
+                        _logger.Debug("Starting download loop...");
                         while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cts.Token)) > 0)
                         {
                             await fileStream.WriteAsync(buffer, 0, bytesRead, cts.Token);
@@ -207,7 +207,7 @@ namespace SolusManifestApp.Services
                             {
                                 var currentBytesRead = totalBytesRead;
                                 var progress = (double)currentBytesRead / totalBytes * 100;
-                                Console.WriteLine($"[DEBUG] Progress update - Read: {currentBytesRead}/{totalBytes} ({progress:F1}%)");
+                                // Progress logging removed to reduce log spam
                                 App.Current.Dispatcher.BeginInvoke(() =>
                                 {
                                     downloadItem.DownloadedBytes = currentBytesRead;
@@ -218,7 +218,7 @@ namespace SolusManifestApp.Services
                             }
                         }
 
-                        Console.WriteLine($"[DEBUG] Download complete - Total read: {totalBytesRead} bytes");
+                        _logger.Debug($"Download complete - Total read: {totalBytesRead} bytes");
                         // Final update to ensure we show 100%
                         App.Current.Dispatcher.BeginInvoke(() =>
                         {
@@ -530,7 +530,7 @@ namespace SolusManifestApp.Services
                     downloadItem.StatusMessage = "Download starting...");
 
                 // Download the file with 5-second response timeout
-                Console.WriteLine($"[DEBUG FileOnly] Requesting download: {downloadItem.DownloadUrl}");
+                _logger.Debug($"FileOnly: Requesting download: {downloadItem.DownloadUrl}");
 
                 var downloadCts = new CancellationTokenSource();
                 downloadCts.CancelAfter(5000); // 5 second timeout for initial response
@@ -544,29 +544,29 @@ namespace SolusManifestApp.Services
                 catch (OperationCanceledException) when (downloadCts.IsCancellationRequested && !cts.IsCancellationRequested)
                 {
                     // Download request timed out after 5 seconds, check status again
-                    Console.WriteLine($"[DEBUG FileOnly] Download request timed out, checking status...");
+                    _logger.Debug("FileOnly: Download request timed out, checking status...");
 
                     try
                     {
                         var status = await _manifestApiService.GetGameStatusAsync(manifest.AppId, apiKey);
-                        Console.WriteLine($"[DEBUG FileOnly] Status check result: UpdateInProgress={status?.UpdateInProgress}, Status={status?.Status}");
+                        _logger.Debug($"FileOnly: Status check result: UpdateInProgress={status?.UpdateInProgress}, Status={status?.Status}");
 
                         if (status?.UpdateInProgress == true)
                         {
-                            Console.WriteLine($"[DEBUG FileOnly] Server is updating, going back to polling...");
+                            _logger.Debug("FileOnly: Server is updating, going back to polling...");
                             // Server is still updating, go back to polling
                             await WaitForServerReady(manifest.AppId, apiKey, downloadItem, cts.Token);
 
                             App.Current.Dispatcher.BeginInvoke(() =>
                                 downloadItem.StatusMessage = "Download starting...");
 
-                            Console.WriteLine($"[DEBUG FileOnly] Retrying download after waiting...");
+                            _logger.Debug("FileOnly: Retrying download after waiting...");
                             // Try download again
                             response = await _httpClient.GetAsync(downloadItem.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, cts.Token);
                         }
                         else
                         {
-                            Console.WriteLine($"[DEBUG FileOnly] Server not updating, but timeout occurred - retrying with longer timeout...");
+                            _logger.Debug("FileOnly: Server not updating, but timeout occurred - retrying with longer timeout...");
                             // Server not updating, just retry with 30-second timeout
                             var retryCts = new CancellationTokenSource();
                             retryCts.CancelAfter(30000); // 30 second timeout
@@ -576,7 +576,7 @@ namespace SolusManifestApp.Services
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[DEBUG FileOnly] Status check failed: {ex.Message}");
+                        _logger.Debug($"FileOnly: Status check failed: {ex.Message}");
                         throw;
                     }
                 }
@@ -586,7 +586,7 @@ namespace SolusManifestApp.Services
                     response.EnsureSuccessStatusCode();
 
                     var totalBytes = response.Content.Headers.ContentLength ?? manifest.Size;
-                    Console.WriteLine($"[DEBUG FileOnly] Download started - Total bytes: {totalBytes}");
+                    _logger.Debug($"FileOnly: Download started - Total bytes: {totalBytes}");
                     App.Current.Dispatcher.BeginInvoke(() =>
                     {
                         downloadItem.TotalBytes = totalBytes;
@@ -602,7 +602,7 @@ namespace SolusManifestApp.Services
                     int bytesRead;
                     var lastUpdate = DateTime.Now;
 
-                    Console.WriteLine($"[DEBUG FileOnly] Starting download loop...");
+                    _logger.Debug("FileOnly: Starting download loop...");
                     while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cts.Token)) > 0)
                     {
                         await fileStream.WriteAsync(buffer, 0, bytesRead, cts.Token);
@@ -614,7 +614,7 @@ namespace SolusManifestApp.Services
                         {
                             var currentBytesRead = totalBytesRead;
                             var progress = (double)currentBytesRead / totalBytes * 100;
-                            Console.WriteLine($"[DEBUG FileOnly] Progress update - Read: {currentBytesRead}/{totalBytes} ({progress:F1}%)");
+                            // Progress logging removed to reduce log spam
                             App.Current.Dispatcher.BeginInvoke(() =>
                             {
                                 downloadItem.DownloadedBytes = currentBytesRead;
@@ -625,7 +625,7 @@ namespace SolusManifestApp.Services
                         }
                     }
 
-                    Console.WriteLine($"[DEBUG FileOnly] Download complete - Total read: {totalBytesRead} bytes");
+                    _logger.Debug($"FileOnly: Download complete - Total read: {totalBytesRead} bytes");
                     // Final update to ensure we show 100%
                     App.Current.Dispatcher.BeginInvoke(() =>
                     {
@@ -804,7 +804,7 @@ namespace SolusManifestApp.Services
 
                 logHandler = (sender, e) =>
                 {
-                    Console.WriteLine($"[DepotDownloader] {e.Message}");
+                    _logger.Debug($"[DepotDownloader] {e.Message}");
                 };
 
                 depotDownloaderService.ProgressChanged += progressHandler;

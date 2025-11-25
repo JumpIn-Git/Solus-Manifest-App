@@ -14,8 +14,9 @@ using System.Windows;
 
 namespace SolusManifestApp.ViewModels
 {
-    public partial class DownloadsViewModel : ObservableObject
+    public partial class DownloadsViewModel : ObservableObject, IDisposable
     {
+        private bool _disposed;
         private readonly DownloadService _downloadService;
         private readonly FileInstallService _fileInstallService;
         private readonly SettingsService _settingsService;
@@ -670,6 +671,25 @@ namespace SolusManifestApp.ViewModels
                     UseShellExecute = true
                 });
             }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+
+            if (disposing)
+            {
+                // Unsubscribe from events to prevent memory leaks
+                _downloadService.DownloadCompleted -= OnDownloadCompleted;
+            }
+
+            _disposed = true;
         }
     }
 }

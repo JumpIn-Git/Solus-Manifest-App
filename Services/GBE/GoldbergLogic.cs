@@ -146,7 +146,10 @@ namespace SolusManifestApp.Services.GBE
                         Directory.Delete(tempLibDir, true);
                     }
                 }
-                catch { }
+                catch
+                {
+                    // Ignore cleanup errors - temp directory will be cleaned up by OS eventually
+                }
             }
             return (false, null, 0);
         }

@@ -1,13 +1,8 @@
 <UserControl x:Class="SolusManifestApp.Tools.SteamAuthPro.SteamAuthProControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Border BorderBrush="{DynamicResource AccentBrush}"
-            BorderThickness="1"
-            CornerRadius="8"
-            Background="{DynamicResource SecondaryDarkBrush}"
-            Margin="20">
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="20" MaxWidth="700" HorizontalAlignment="Left">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20" MaxWidth="700" HorizontalAlignment="Left">
                 <!-- Active Account -->
                 <Border Style="{StaticResource ModernCardStyle}" Margin="0,0,0,15">
                     <StackPanel>
@@ -120,7 +115,6 @@
                                  BorderBrush="{DynamicResource SecondaryDarkBrush}"/>
                     </StackPanel>
                 </Border>
-            </StackPanel>
-        </ScrollViewer>
-    </Border>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

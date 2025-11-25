@@ -6,10 +6,10 @@
     </UserControl.Resources>
 
     <Grid>
-        <!-- Login View -->
-        <Grid x:Name="LoginView" Visibility="{Binding ShowLoginView, Converter={StaticResource BoolToVis}}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel MaxWidth="500" Margin="20" HorizontalAlignment="Left">
+            <!-- Login View -->
+            <Grid x:Name="LoginView" Visibility="{Binding ShowLoginView, Converter={StaticResource BoolToVis}}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel MaxWidth="500" Margin="20" HorizontalAlignment="Left">
 
                     <Border Style="{StaticResource ModernCardStyle}" Margin="0,0,0,20">
                         <StackPanel>

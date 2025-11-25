@@ -1,3 +1,4 @@
+using SolusManifestApp.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -5,7 +6,7 @@ using System.Linq;
 
 namespace SolusManifestApp.Services
 {
-    public class LoggerService
+    public class LoggerService : ILoggerService
     {
         private static readonly object _lock = new object();
         private readonly string _logFilePath;

@@ -1,18 +1,21 @@
 using Microsoft.Win32;
+using SolusManifestApp.Interfaces;
+using SolusManifestApp.Models;
 using System;
 using System.IO;
-using SolusManifestApp.Models;
 
 namespace SolusManifestApp.Services
 {
-    public class SteamService
+    public class SteamService : ISteamService
     {
         private string? _cachedSteamPath;
         private readonly SettingsService _settingsService;
+        private readonly LoggerService? _logger;
 
-        public SteamService(SettingsService settingsService)
+        public SteamService(SettingsService settingsService, LoggerService? logger = null)
         {
             _settingsService = settingsService;
+            _logger = logger;
         }
 
         public string? GetSteamPath()
@@ -34,7 +37,10 @@ namespace SolusManifestApp.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger?.Debug($"Failed to read 64-bit Steam registry: {ex.Message}");
+            }
 
             // Try registry (32-bit)
             try
@@ -50,7 +56,10 @@ namespace SolusManifestApp.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger?.Debug($"Failed to read 32-bit Steam registry: {ex.Message}");
+            }
 
             // Fallback to common locations
             var commonPaths = new[]

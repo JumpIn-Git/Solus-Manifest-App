@@ -15,8 +15,9 @@ using System.Windows;
 
 namespace SolusManifestApp.ViewModels
 {
-    public partial class LibraryViewModel : ObservableObject
+    public partial class LibraryViewModel : ObservableObject, IDisposable
     {
+        private bool _disposed;
         private readonly FileInstallService _fileInstallService;
         private readonly SteamService _steamService;
         private readonly SteamGamesService _steamGamesService;
@@ -1732,6 +1733,29 @@ namespace SolusManifestApp.ViewModels
             {
                 _logger.Error($"Error caching images: {ex.Message}");
             }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+
+            if (disposing)
+            {
+                // Unsubscribe from events to prevent memory leaks
+                _refreshService.GameInstalled -= OnGameInstalled;
+                _refreshService.GreenLumaGameInstalled -= OnGreenLumaGameInstalled;
+
+                // Clear image cache
+                _imageCacheService?.ClearCache();
+            }
+
+            _disposed = true;
         }
     }
 }

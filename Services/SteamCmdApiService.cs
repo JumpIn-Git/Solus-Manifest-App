@@ -105,9 +105,9 @@ namespace SolusManifestApp.Services
 
                 return data;
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Error fetching SteamCMD data for {appId}: {ex.Message}");
+                // Failed to fetch depot info - return null to allow fallback
                 return null;
             }
         }

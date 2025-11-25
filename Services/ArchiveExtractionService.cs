@@ -64,7 +64,10 @@ namespace SolusManifestApp.Services
                     {
                         Directory.Delete(tempDir, true);
                     }
-                    catch { }
+                    catch
+                    {
+                        // Ignore cleanup errors - temp directory will be cleaned up by OS eventually
+                    }
                 }
 
                 throw new Exception($"Error extracting archive: {ex.Message}", ex);
@@ -81,7 +84,7 @@ namespace SolusManifestApp.Services
                 }
                 catch
                 {
-                    // Ignore cleanup errors
+                    // Ignore cleanup errors - temp directory will be cleaned up by OS eventually
                 }
             }
         }

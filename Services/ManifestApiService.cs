@@ -1,3 +1,4 @@
+using SolusManifestApp.Interfaces;
 using SolusManifestApp.Models;
 using Newtonsoft.Json;
 using System;
@@ -7,28 +8,33 @@ using System.Threading.Tasks;
 
 namespace SolusManifestApp.Services
 {
-    public class ManifestApiService
+    public class ManifestApiService : IManifestApiService
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly CacheService? _cacheService;
         private const string BaseUrl = "https://manifest.morrenus.xyz/api/v1";
         private readonly TimeSpan _statusCacheExpiration = TimeSpan.FromMinutes(5); // Cache status for 5 minutes
 
-        public ManifestApiService(CacheService? cacheService = null)
+        public ManifestApiService(IHttpClientFactory httpClientFactory, CacheService? cacheService = null)
         {
-            _httpClient = new HttpClient
-            {
-                Timeout = TimeSpan.FromSeconds(30)
-            };
+            _httpClientFactory = httpClientFactory;
             _cacheService = cacheService;
+        }
+
+        private HttpClient CreateClient()
+        {
+            var client = _httpClientFactory.CreateClient("Default");
+            client.Timeout = TimeSpan.FromSeconds(30);
+            return client;
         }
 
         public async Task<Manifest?> GetManifestAsync(string appId, string apiKey)
         {
             try
             {
+                var client = CreateClient();
                 var url = $"{BaseUrl}/manifest/{appId}?api_key={apiKey}";
-                var response = await _httpClient.GetAsync(url);
+                var response = await client.GetAsync(url);
                 var json = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
@@ -58,8 +64,9 @@ namespace SolusManifestApp.Services
         {
             try
             {
+                var client = CreateClient();
                 var url = $"{BaseUrl}/search?q={Uri.EscapeDataString(query)}&api_key={apiKey}";
-                var response = await _httpClient.GetAsync(url);
+                var response = await client.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -80,8 +87,9 @@ namespace SolusManifestApp.Services
         {
             try
             {
+                var client = CreateClient();
                 var url = $"{BaseUrl}/games?api_key={apiKey}";
-                var response = await _httpClient.GetAsync(url);
+                var response = await client.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -107,8 +115,9 @@ namespace SolusManifestApp.Services
         {
             try
             {
+                var client = CreateClient();
                 var url = $"{BaseUrl}/status/10?api_key={apiKey}";
-                var response = await _httpClient.GetAsync(url);
+                var response = await client.GetAsync(url);
                 return response.IsSuccessStatusCode;
             }
             catch
@@ -129,14 +138,18 @@ namespace SolusManifestApp.Services
                     {
                         return JsonConvert.DeserializeObject<GameStatus>(cachedJson);
                     }
-                    catch { }
+                    catch
+                    {
+                        // Ignore deserialization errors - will fetch fresh data
+                    }
                 }
             }
 
             try
             {
+                var client = CreateClient();
                 var url = $"{BaseUrl}/status/{appId}?api_key={apiKey}";
-                var response = await _httpClient.GetAsync(url);
+                var response = await client.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -161,13 +174,14 @@ namespace SolusManifestApp.Services
         {
             try
             {
+                var client = CreateClient();
                 var url = $"{BaseUrl}/library?api_key={apiKey}&limit={limit}&offset={offset}&sort_by={sortBy}";
                 if (!string.IsNullOrEmpty(search))
                 {
                     url += $"&search={Uri.EscapeDataString(search)}";
                 }
 
-                var response = await _httpClient.GetAsync(url);
+                var response = await client.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -188,8 +202,9 @@ namespace SolusManifestApp.Services
         {
             try
             {
+                var client = CreateClient();
                 var url = $"{BaseUrl}/search?q={Uri.EscapeDataString(query)}&api_key={apiKey}&limit={limit}";
-                var response = await _httpClient.GetAsync(url);
+                var response = await client.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
                 {

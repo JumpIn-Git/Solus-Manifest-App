@@ -1,3 +1,4 @@
+using SolusManifestApp.Interfaces;
 using SolusManifestApp.Models;
 using Newtonsoft.Json;
 using System;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace SolusManifestApp.Services
 {
-    public class CacheService
+    public class CacheService : ICacheService
     {
         private readonly string _cacheFolder;
         private readonly string _iconCacheFolder;
@@ -318,7 +319,10 @@ namespace SolusManifestApp.Services
                     File.Delete(file);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger?.Warning($"Failed to clear icon cache: {ex.Message}");
+            }
         }
 
         private void ManageIconCacheSize()
@@ -392,7 +396,10 @@ namespace SolusManifestApp.Services
                 var filePath = Path.Combine(_dataCacheFolder, "manifests.json");
                 File.WriteAllText(filePath, json);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger?.Warning($"Failed to cache manifests: {ex.Message}");
+            }
         }
 
         public List<Manifest>? GetCachedManifests()
@@ -406,7 +413,10 @@ namespace SolusManifestApp.Services
                     return JsonConvert.DeserializeObject<List<Manifest>>(json);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger?.Debug($"Failed to read cached manifests: {ex.Message}");
+            }
 
             return null;
         }
@@ -419,7 +429,10 @@ namespace SolusManifestApp.Services
                 var filePath = Path.Combine(_dataCacheFolder, $"manifest_{manifest.AppId}.json");
                 File.WriteAllText(filePath, json);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger?.Warning($"Failed to cache manifest for {manifest.AppId}: {ex.Message}");
+            }
         }
 
         public Manifest? GetCachedManifest(string appId)
@@ -433,7 +446,10 @@ namespace SolusManifestApp.Services
                     return JsonConvert.DeserializeObject<Manifest>(json);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger?.Debug($"Failed to read cached manifest for {appId}: {ex.Message}");
+            }
 
             return null;
         }
@@ -454,7 +470,10 @@ namespace SolusManifestApp.Services
                     File.Delete(file);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger?.Warning($"Failed to clear data cache: {ex.Message}");
+            }
         }
 
         public void ClearAllCache()
@@ -475,7 +494,10 @@ namespace SolusManifestApp.Services
                     size += new FileInfo(file).Length;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger?.Debug($"Error calculating cache size: {ex.Message}");
+            }
 
             return size;
         }
@@ -494,7 +516,10 @@ namespace SolusManifestApp.Services
                 var json = JsonConvert.SerializeObject(cacheInfo, Formatting.Indented);
                 File.WriteAllText(filePath, json);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger?.Warning($"Failed to cache Steam app list: {ex.Message}");
+            }
         }
 
         public (string? data, DateTime? timestamp) GetCachedSteamAppList()
@@ -509,7 +534,10 @@ namespace SolusManifestApp.Services
                     return (obj?.data?.ToString(), obj?.timestamp != null ? (DateTime)obj.timestamp : null);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger?.Debug($"Failed to read cached Steam app list: {ex.Message}");
+            }
 
             return (null, null);
         }
@@ -538,7 +566,10 @@ namespace SolusManifestApp.Services
                 var json = JsonConvert.SerializeObject(cacheInfo, Formatting.Indented);
                 File.WriteAllText(filePath, json);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger?.Warning($"Failed to cache game status for {appId}: {ex.Message}");
+            }
         }
 
         public (string? data, DateTime? timestamp) GetCachedGameStatus(string appId)
@@ -553,7 +584,10 @@ namespace SolusManifestApp.Services
                     return (obj?.data?.ToString(), obj?.timestamp != null ? (DateTime)obj.timestamp : null);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger?.Debug($"Failed to read cached game status for {appId}: {ex.Message}");
+            }
 
             return (null, null);
         }

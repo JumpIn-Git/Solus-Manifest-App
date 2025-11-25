@@ -1,11 +1,12 @@
 using Microsoft.Toolkit.Uwp.Notifications;
 using SolusManifestApp.Helpers;
+using SolusManifestApp.Interfaces;
 using System;
 using System.Windows;
 
 namespace SolusManifestApp.Services
 {
-    public class NotificationService
+    public class NotificationService : INotificationService
     {
         private readonly SettingsService _settingsService;
         private static bool _isInitialized = false;

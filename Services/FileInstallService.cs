@@ -188,7 +188,10 @@ namespace SolusManifestApp.Services
                     {
                         Directory.Delete(tempDir, true);
                     }
-                    catch { }
+                    catch
+                    {
+                        // Ignore cleanup errors - temp directory will be cleaned up by OS eventually
+                    }
                 }
             }
             catch (Exception ex)
@@ -316,7 +319,10 @@ namespace SolusManifestApp.Services
                     });
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger.Warning($"Error scanning installed games: {ex.Message}");
+            }
 
             return games;
         }
@@ -343,9 +349,9 @@ namespace SolusManifestApp.Services
                             UseShellExecute = true
                         });
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // Continue even if Steam uninstall fails
+                        _logger.Debug($"Steam uninstall command failed (continuing anyway): {ex.Message}");
                     }
 
                     // Delete the lua file
@@ -355,8 +361,9 @@ namespace SolusManifestApp.Services
 
                 return false;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.Error($"Failed to uninstall game {appId}: {ex.Message}");
                 return false;
             }
         }
@@ -453,8 +460,9 @@ namespace SolusManifestApp.Services
 
                 return false;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.Error($"Failed to delete ACF file for {appId}: {ex.Message}");
                 return false;
             }
         }
@@ -495,13 +503,17 @@ namespace SolusManifestApp.Services
                             return true;
                         }
                     }
-                    catch { }
+                    catch
+                    {
+                        // Skip unreadable files
+                    }
                 }
 
                 return false;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.Debug($"Error checking AppList for {appId}: {ex.Message}");
                 return false;
             }
         }
@@ -547,7 +559,10 @@ namespace SolusManifestApp.Services
                             existingAppIds.Add(content);
                         }
                     }
-                    catch { }
+                    catch
+                    {
+                        // Skip unreadable files
+                    }
                 }
 
                 // Filter out appIds that already exist
@@ -589,8 +604,9 @@ namespace SolusManifestApp.Services
 
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.Error($"Failed to generate AppList: {ex.Message}");
                 return false;
             }
         }
@@ -623,8 +639,9 @@ namespace SolusManifestApp.Services
 
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.Error($"Failed to remove AppList entry for {appId}: {ex.Message}");
                 return false;
             }
         }
@@ -651,8 +668,9 @@ namespace SolusManifestApp.Services
                 File.Move(manifestPath, destPath, true);
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.Error($"Failed to move manifest to depot cache: {ex.Message}");
                 return false;
             }
         }

@@ -45,15 +45,24 @@ namespace SolusManifestApp.Services
 
     public class UpdateService
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
         private const string GitHubApiUrl = "https://api.github.com/repos/{owner}/{repo}/releases/latest";
         private const string Owner = "MorrenusGames";
         private const string Repo = "Solus-Manifest-App";
 
-        public UpdateService()
+        public UpdateService(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "SolusManifestApp");
+            _httpClientFactory = httpClientFactory;
+        }
+
+        private HttpClient CreateClient()
+        {
+            var client = _httpClientFactory.CreateClient("Default");
+            if (!client.DefaultRequestHeaders.Contains("User-Agent"))
+            {
+                client.DefaultRequestHeaders.Add("User-Agent", "SolusManifestApp");
+            }
+            return client;
         }
 
 
@@ -67,8 +76,9 @@ namespace SolusManifestApp.Services
         {
             try
             {
+                var client = CreateClient();
                 var url = GitHubApiUrl.Replace("{owner}", Owner).Replace("{repo}", Repo);
-                var response = await _httpClient.GetAsync(url);
+                var response = await client.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -121,7 +131,8 @@ namespace SolusManifestApp.Services
                 var tempExePath = Path.Combine(Path.GetTempPath(), "SolusManifestApp_Update.exe");
 
                 // Download EXE directly
-                using (var response = await _httpClient.GetAsync(exeAsset.BrowserDownloadUrl, HttpCompletionOption.ResponseHeadersRead))
+                var client = CreateClient();
+                using (var response = await client.GetAsync(exeAsset.BrowserDownloadUrl, HttpCompletionOption.ResponseHeadersRead))
                 {
                     response.EnsureSuccessStatusCode();
 
@@ -164,7 +175,8 @@ namespace SolusManifestApp.Services
                 var tempExtractPath = Path.Combine(Path.GetTempPath(), "SolusManifestApp_Update_Extract");
 
                 // Download ZIP
-                using (var response = await _httpClient.GetAsync(zipAsset.BrowserDownloadUrl, HttpCompletionOption.ResponseHeadersRead))
+                var client = CreateClient();
+                using (var response = await client.GetAsync(zipAsset.BrowserDownloadUrl, HttpCompletionOption.ResponseHeadersRead))
                 {
                     response.EnsureSuccessStatusCode();
 

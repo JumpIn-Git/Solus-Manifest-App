@@ -1,3 +1,4 @@
+using SolusManifestApp.Interfaces;
 using SolusManifestApp.Models;
 using Newtonsoft.Json;
 using System;
@@ -5,7 +6,7 @@ using System.IO;
 
 namespace SolusManifestApp.Services
 {
-    public class SettingsService
+    public class SettingsService : ISettingsService
     {
         private readonly string _settingsPath;
         private AppSettings? _settings;

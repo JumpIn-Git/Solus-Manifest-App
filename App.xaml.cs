@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SolusManifestApp.Helpers;
+using SolusManifestApp.Interfaces;
 using SolusManifestApp.Services;
 using SolusManifestApp.ViewModels;
 using SolusManifestApp.Views;
@@ -23,18 +24,39 @@ namespace SolusManifestApp
             _host = Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                 {
-                    // Services
+                    // Configure HttpClient factory for proper connection pooling
+                    services.AddHttpClient("Default", client =>
+                    {
+                        client.Timeout = TimeSpan.FromMinutes(30);
+                        client.DefaultRequestHeaders.Add("User-Agent", "SolusManifestApp/1.0");
+                    });
+
+                    // Services (with interface registrations for testability)
                     services.AddSingleton<LoggerService>();
+                    services.AddSingleton<ILoggerService>(sp => sp.GetRequiredService<LoggerService>());
+
                     services.AddSingleton<SettingsService>();
+                    services.AddSingleton<ISettingsService>(sp => sp.GetRequiredService<SettingsService>());
+
                     services.AddSingleton<SteamService>();
+                    services.AddSingleton<ISteamService>(sp => sp.GetRequiredService<SteamService>());
+
                     services.AddSingleton<SteamGamesService>();
                     services.AddSingleton<SteamApiService>();
+
                     services.AddSingleton<ManifestApiService>();
+                    services.AddSingleton<IManifestApiService>(sp => sp.GetRequiredService<ManifestApiService>());
+
                     services.AddSingleton<DownloadService>();
                     services.AddSingleton<FileInstallService>();
                     services.AddSingleton<UpdateService>();
+
                     services.AddSingleton<NotificationService>();
+                    services.AddSingleton<INotificationService>(sp => sp.GetRequiredService<NotificationService>());
+
                     services.AddSingleton<CacheService>();
+                    services.AddSingleton<ICacheService>(sp => sp.GetRequiredService<CacheService>());
+
                     services.AddSingleton<BackupService>();
                     services.AddSingleton<DepotDownloadService>();
                     services.AddSingleton<SteamLibraryService>();

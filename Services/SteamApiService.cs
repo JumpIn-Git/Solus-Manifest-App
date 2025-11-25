@@ -181,6 +181,7 @@ namespace SolusManifestApp.Services
             }
             catch
             {
+                // Fallback API failed - will try Steam API next
                 return null;
             }
         }
@@ -204,7 +205,10 @@ namespace SolusManifestApp.Services
                         _cachedData = JsonConvert.DeserializeObject<SteamApiResponse>(cachedJson);
                         return _cachedData;
                     }
-                    catch { }
+                    catch
+                    {
+                        // Ignore deserialization errors - will fetch fresh data
+                    }
                 }
             }
 
@@ -222,7 +226,7 @@ namespace SolusManifestApp.Services
             }
             catch
             {
-                // Fall through to Steam API if Morrenus API fails
+                // Morrenus API failed - fall through to Steam API
             }
 
             // Fetch from Morrenus App List API
@@ -264,7 +268,10 @@ namespace SolusManifestApp.Services
                         _cachedData = JsonConvert.DeserializeObject<SteamApiResponse>(cachedJson);
                         return _cachedData;
                     }
-                    catch { }
+                    catch
+                    {
+                        // Stale cache deserialization failed - throw original error
+                    }
                 }
 
                 throw new Exception($"Failed to fetch Steam app list: {ex.Message}", ex);
@@ -366,7 +373,10 @@ namespace SolusManifestApp.Services
                     {
                         return JsonConvert.DeserializeObject<SteamStoreSearchResponse>(cachedJson);
                     }
-                    catch { }
+                    catch
+                    {
+                        // Ignore deserialization errors - will fetch fresh data
+                    }
                 }
             }
 
