@@ -1,0 +1,24 @@
+name: Discord Notify
+
+on:
+  push:
+    branches: [main]
+    tags: ['*']
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Discord notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            TITLE="🏷️ New Release: ${{ github.ref_name }}"
+          else
+            TITLE="📦 New Commit"
+          fi
+
+          curl -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"$TITLE\",\"description\":\"${{ github.event.head_commit.message }}\",\"url\":\"${{ github.event.head_commit.url }}\",\"color\":5814783,\"author\":{\"name\":\"${{ github.actor }}\"}}]}" \
+            $DISCORD_WEBHOOK
