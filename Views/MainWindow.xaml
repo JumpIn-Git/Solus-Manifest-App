@@ -6,8 +6,8 @@
         Title="Solus Manifest App"
         Height="900"
         Width="1200"
-        MinHeight="700"
-        MinWidth="1130"
+        MinHeight="600"
+        MinWidth="800"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -15,7 +15,7 @@
         WindowStartupLocation="CenterScreen">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="50"
+        <WindowChrome CaptionHeight="40"
                       ResizeBorderThickness="5"
                       CornerRadius="0"
                       GlassFrameThickness="0"
@@ -32,7 +32,7 @@
         <Grid>
             <!-- Main Layout -->
             <Grid.RowDefinitions>
-                <RowDefinition Height="50"/>
+                <RowDefinition Height="40"/>
                 <!-- Title Bar -->
                 <RowDefinition Height="*"/>
                 <!-- Content -->
@@ -46,9 +46,9 @@
                 <Grid>
                     <StackPanel Orientation="Horizontal"
                                 VerticalAlignment="Center"
-                                Margin="20,0">
+                                Margin="12,0">
                         <TextBlock Text="Solus Manifest App"
-                                   FontSize="18"
+                                   FontSize="14"
                                    FontWeight="Bold"
                                    Foreground="{DynamicResource AccentBrush}"
                                    VerticalAlignment="Center"/>
@@ -58,9 +58,9 @@
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Center"
-                                Margin="0,0,15,0"
+                                Margin="0,0,8,0"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
-                        <Button Width="46" Height="32"
+                        <Button Width="36" Height="28"
                                 Background="Transparent"
                                 Foreground="{DynamicResource TextPrimaryBrush}"
                                 BorderThickness="0"
@@ -75,15 +75,15 @@
                                         <Setter.Value>
                                             <ControlTemplate TargetType="Button">
                                                 <Border Background="{TemplateBinding Background}"
-                                                        Width="46" Height="32"
+                                                        Width="36" Height="28"
                                                         Padding="0">
                                                     <TextBlock Text="_"
-                                                               FontSize="16"
+                                                               FontSize="14"
                                                                FontWeight="Bold"
                                                                Foreground="{TemplateBinding Foreground}"
                                                                HorizontalAlignment="Center"
                                                                VerticalAlignment="Center"
-                                                               Margin="0,-5,0,0"/>
+                                                               Margin="0,-4,0,0"/>
                                                 </Border>
                                             </ControlTemplate>
                                         </Setter.Value>
@@ -96,7 +96,7 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Button Width="46" Height="32"
+                        <Button Width="36" Height="28"
                                 Background="Transparent"
                                 Foreground="{DynamicResource TextPrimaryBrush}"
                                 BorderThickness="0"
@@ -111,15 +111,14 @@
                                         <Setter.Value>
                                             <ControlTemplate TargetType="Button">
                                                 <Border Background="{TemplateBinding Background}"
-                                                        Width="46" Height="32"
+                                                        Width="36" Height="28"
                                                         Padding="0">
                                                     <TextBlock Text="□"
-                                                               FontSize="14"
+                                                               FontSize="12"
                                                                FontWeight="Normal"
                                                                Foreground="{TemplateBinding Foreground}"
                                                                HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"
-                                                               Margin="0,0,0,0"/>
+                                                               VerticalAlignment="Center"/>
                                                 </Border>
                                             </ControlTemplate>
                                         </Setter.Value>
@@ -132,7 +131,7 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Button Width="46" Height="32"
+                        <Button Width="36" Height="28"
                                 Background="Transparent"
                                 Foreground="{DynamicResource TextPrimaryBrush}"
                                 BorderThickness="0"
@@ -147,15 +146,14 @@
                                         <Setter.Value>
                                             <ControlTemplate TargetType="Button">
                                                 <Border Background="{TemplateBinding Background}"
-                                                        Width="46" Height="32"
+                                                        Width="36" Height="28"
                                                         Padding="0">
                                                     <TextBlock Text="✕"
-                                                               FontSize="14"
+                                                               FontSize="12"
                                                                FontWeight="Normal"
                                                                Foreground="{TemplateBinding Foreground}"
                                                                HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"
-                                                               Margin="0,0,0,0"/>
+                                                               VerticalAlignment="Center"/>
                                                 </Border>
                                             </ControlTemplate>
                                         </Setter.Value>

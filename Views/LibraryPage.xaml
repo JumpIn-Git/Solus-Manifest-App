@@ -21,15 +21,45 @@
         </Grid.RowDefinitions>
 
         <!-- Header with Statistics -->
-        <Grid Grid.Row="0" Margin="0,0,0,20">
-            <StackPanel>
-                <TextBlock Text="Library"
-                           FontSize="32"
-                           FontWeight="Bold"
-                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+        <StackPanel Grid.Row="0" Margin="0,0,0,15">
+            <TextBlock Text="Library"
+                       FontSize="28"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource TextPrimaryBrush}"
+                       Margin="0,0,0,10"/>
 
-                <!-- Statistics Dashboard -->
-                <WrapPanel Orientation="Horizontal" Margin="0,10,0,0">
+            <!-- Action Buttons -->
+            <WrapPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Button Content="🔄 Refresh"
+                        Command="{Binding RefreshLibraryCommand}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Margin="0,0,8,6"/>
+                <Button Content="📦 Refresh Cache"
+                        Command="{Binding UpdateSteamAppCacheCommand}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Margin="0,0,8,6"
+                        ToolTip="Refresh game names and icons from Steam's database"/>
+                <Button Content="⬇ Enable Updates"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding EnableAutoUpdatesCommand}"
+                        Margin="0,0,8,6"
+                        ToolTip="Enable auto-updates (SteamTools mode only)"
+                        Visibility="{Binding IsSteamToolsMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <Button Content="⬆ Disable Updates"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding DisableAutoUpdatesCommand}"
+                        Margin="0,0,8,6"
+                        ToolTip="Disable auto-updates (SteamTools mode only)"
+                        Visibility="{Binding IsSteamToolsMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <Button Content="🔄 Restart Steam"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding RestartSteamCommand}"
+                        Margin="0,0,0,6"
+                        ToolTip="Restart Steam"/>
+            </WrapPanel>
+
+            <!-- Statistics Dashboard -->
+            <WrapPanel Orientation="Horizontal">
                     <!-- Lua Card (Lua/SteamTools Mode) -->
                     <Border Background="{DynamicResource CardBackgroundBrush}"
                             Padding="12,8"
@@ -105,37 +135,7 @@
                         </StackPanel>
                     </Border>
                 </WrapPanel>
-            </StackPanel>
-
-            <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                <Button Content="🔄 Refresh"
-                        Command="{Binding RefreshLibraryCommand}"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Margin="0,0,8,8"/>
-                <Button Content="📦 Cache"
-                        Command="{Binding UpdateSteamAppCacheCommand}"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Margin="0,0,8,8"
-                        ToolTip="Refresh game names and icons from Steam's database"/>
-                <Button Content="⬇ Enable Updates"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding EnableAutoUpdatesCommand}"
-                        Margin="0,0,8,8"
-                        ToolTip="Comment out all setManifestid lines to enable auto-updates (SteamTools mode only)"
-                        Visibility="{Binding IsSteamToolsMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                <Button Content="⬆ Disable Updates"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding DisableAutoUpdatesCommand}"
-                        Margin="0,0,8,8"
-                        ToolTip="Uncomment all setManifestid lines to disable auto-updates (SteamTools mode only)"
-                        Visibility="{Binding IsSteamToolsMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                <Button Content="🔄 Restart"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding RestartSteamCommand}"
-                        Margin="0,0,0,8"
-                        ToolTip="Restart Steam"/>
-            </WrapPanel>
-        </Grid>
+        </StackPanel>
 
         <!-- Search and Filters -->
         <Grid Grid.Row="1" Margin="0,0,0,20">
@@ -441,50 +441,58 @@
                                 </StackPanel>
 
                                 <!-- Game Info (List View) -->
-                                <StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" Margin="10" VerticalAlignment="Center" Orientation="Horizontal"
-                                            Visibility="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <!-- Type Badge (List View - before name) -->
-                                    <Border Background="{DynamicResource AccentBrush}"
-                                            Padding="6,3"
-                                            CornerRadius="4"
-                                            VerticalAlignment="Center"
-                                            Margin="0,0,10,0">
-                                        <TextBlock Text="{Binding TypeBadge}"
-                                                   FontSize="10"
-                                                   FontWeight="Bold"
-                                                   Foreground="White"/>
-                                    </Border>
+                                <Grid Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" Margin="10" VerticalAlignment="Center"
+                                      Visibility="{Binding DataContext.IsListView, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
 
-                                    <TextBlock Text="{Binding Name}"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                               TextWrapping="NoWrap"
-                                               TextTrimming="CharacterEllipsis"
-                                               VerticalAlignment="Center"
-                                               MinWidth="200"
-                                               Margin="0,0,15,0"/>
+                                    <!-- Top row: Badge + Name -->
+                                    <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
+                                        <Border Background="{DynamicResource AccentBrush}"
+                                                Padding="6,3"
+                                                CornerRadius="4"
+                                                VerticalAlignment="Center"
+                                                Margin="0,0,10,0">
+                                            <TextBlock Text="{Binding TypeBadge}"
+                                                       FontSize="10"
+                                                       FontWeight="Bold"
+                                                       Foreground="White"/>
+                                        </Border>
 
-                                    <TextBlock Text="{Binding AppId, StringFormat='App ID: {0}'}"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               VerticalAlignment="Center"
-                                               Margin="0,0,15,0"/>
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   TextWrapping="NoWrap"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center"/>
+                                    </WrapPanel>
 
-                                    <TextBlock Text="{Binding SizeFormatted}"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               VerticalAlignment="Center"
-                                               Margin="0,0,15,0"/>
+                                    <!-- Bottom row: Details -->
+                                    <WrapPanel Grid.Row="1" Orientation="Horizontal">
+                                        <TextBlock Text="{Binding AppId, StringFormat='App ID: {0}'}"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,12,0"/>
 
-                                    <TextBlock FontSize="11"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               VerticalAlignment="Center"
-                                               Visibility="{Binding LastUpdated, Converter={StaticResource NullToVisibilityConverter}}">
-                                        <Run Text="Updated:"/>
-                                        <Run Text="{Binding LastUpdated, StringFormat='{}{0:yyyy-MM-dd}'}"/>
-                                    </TextBlock>
-                                </StackPanel>
+                                        <TextBlock Text="{Binding SizeFormatted}"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,12,0"/>
+
+                                        <TextBlock FontSize="11"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center"
+                                                   Visibility="{Binding LastUpdated, Converter={StaticResource NullToVisibilityConverter}}">
+                                            <Run Text="Updated:"/>
+                                            <Run Text="{Binding LastUpdated, StringFormat='{}{0:MMM d}'}"/>
+                                        </TextBlock>
+                                    </WrapPanel>
+                                </Grid>
 
                                 <!-- Bottom Section (Grid View) - Pinned to bottom -->
                                 <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,5,10,10"
