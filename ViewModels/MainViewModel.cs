@@ -25,9 +25,6 @@ namespace SolusManifestApp.ViewModels
         [ObservableProperty]
         private string _currentPageName = "Home";
 
-        [ObservableProperty]
-        private bool _showInstaller = true;
-
         public HomeViewModel HomeViewModel { get; }
         public LuaInstallerViewModel LuaInstallerViewModel { get; }
         public LibraryViewModel LibraryViewModel { get; }
@@ -69,13 +66,6 @@ namespace SolusManifestApp.ViewModels
             CurrentPage = GetOrCreateView("Home", () => new HomePage { DataContext = HomeViewModel });
             CurrentPageName = "Home";
             HomeViewModel.RefreshMode();
-            RefreshShowInstaller();
-        }
-
-        private void RefreshShowInstaller()
-        {
-            var settings = _settingsService.LoadSettings();
-            ShowInstaller = settings.Mode == Models.ToolMode.SteamTools;
         }
 
         private UserControl GetOrCreateView(string key, Func<UserControl> createView)
@@ -143,7 +133,6 @@ namespace SolusManifestApp.ViewModels
             CurrentPage = GetOrCreateView("Home", () => new HomePage { DataContext = HomeViewModel });
             CurrentPageName = "Home";
             HomeViewModel.RefreshMode();
-            RefreshShowInstaller();
         }
 
         [RelayCommand]

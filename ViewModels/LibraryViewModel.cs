@@ -226,6 +226,16 @@ namespace SolusManifestApp.ViewModels
             // Load from database cache (any age)
             var cachedItems = _dbService.GetAllLibraryItems();
 
+            // Filter cached items based on mode - don't show Lua games in GreenLuma mode and vice versa
+            if (IsGreenLumaMode)
+            {
+                cachedItems = cachedItems.Where(i => i.ItemType != LibraryItemType.Lua).ToList();
+            }
+            else if (IsSteamToolsMode)
+            {
+                cachedItems = cachedItems.Where(i => i.ItemType != LibraryItemType.GreenLuma).ToList();
+            }
+
             if (cachedItems.Count > 0)
             {
                 _allItems = cachedItems;
@@ -295,6 +305,16 @@ namespace SolusManifestApp.ViewModels
                 {
                     _logger.Info("Loading library from database cache (fast path)");
                     var cachedItems = _dbService.GetAllLibraryItems();
+
+                    // Filter cached items based on mode
+                    if (IsGreenLumaMode)
+                    {
+                        cachedItems = cachedItems.Where(i => i.ItemType != LibraryItemType.Lua).ToList();
+                    }
+                    else if (IsSteamToolsMode)
+                    {
+                        cachedItems = cachedItems.Where(i => i.ItemType != LibraryItemType.GreenLuma).ToList();
+                    }
 
                     // Only use cache if it has items
                     if (cachedItems.Count > 0)
