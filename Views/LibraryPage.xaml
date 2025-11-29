@@ -29,21 +29,21 @@
                            Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                 <!-- Statistics Dashboard -->
-                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <WrapPanel Orientation="Horizontal" Margin="0,10,0,0">
                     <!-- Lua Card (Lua/SteamTools Mode) -->
                     <Border Background="{DynamicResource CardBackgroundBrush}"
-                            Padding="15,10"
+                            Padding="12,8"
                             CornerRadius="8"
-                            Margin="0,0,10,0"
+                            Margin="0,0,8,8"
                             Visibility="{Binding IsGreenLumaMode, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                         <StackPanel>
                             <TextBlock Text="{Binding TotalLua}"
-                                       FontSize="24"
+                                       FontSize="20"
                                        FontWeight="Bold"
                                        Foreground="{DynamicResource AccentBrush}"
                                        HorizontalAlignment="Center"/>
                             <TextBlock Text="Lua"
-                                       FontSize="12"
+                                       FontSize="11"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        HorizontalAlignment="Center"/>
                         </StackPanel>
@@ -51,45 +51,46 @@
 
                     <!-- GreenLuma Card (GreenLuma Mode) -->
                     <Border Background="{DynamicResource CardBackgroundBrush}"
-                            Padding="15,10"
+                            Padding="12,8"
                             CornerRadius="8"
-                            Margin="0,0,10,0"
+                            Margin="0,0,8,8"
                             Visibility="{Binding IsGreenLumaMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel>
                             <TextBlock Text="{Binding TotalGreenLuma}"
-                                       FontSize="24"
+                                       FontSize="20"
                                        FontWeight="Bold"
                                        Foreground="{DynamicResource AccentBrush}"
                                        HorizontalAlignment="Center"/>
-                            <TextBlock Text="GreenLuma Games"
-                                       FontSize="12"
+                            <TextBlock Text="GreenLuma"
+                                       FontSize="11"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
                     <Border Background="{DynamicResource CardBackgroundBrush}"
-                            Padding="15,10"
+                            Padding="12,8"
                             CornerRadius="8"
-                            Margin="0,0,10,0">
+                            Margin="0,0,8,8">
                         <StackPanel>
                             <TextBlock Text="{Binding TotalSteamGames}"
-                                       FontSize="24"
+                                       FontSize="20"
                                        FontWeight="Bold"
                                        Foreground="{DynamicResource AccentBrush}"
                                        HorizontalAlignment="Center"/>
-                            <TextBlock Text="Steam Games"
-                                       FontSize="12"
+                            <TextBlock Text="Steam"
+                                       FontSize="11"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
                     <Border Background="{DynamicResource CardBackgroundBrush}"
-                            Padding="15,10"
-                            CornerRadius="8">
+                            Padding="12,8"
+                            CornerRadius="8"
+                            Margin="0,0,0,8">
                         <StackPanel>
-                            <TextBlock FontSize="18"
+                            <TextBlock FontSize="16"
                                        FontWeight="Bold"
                                        Foreground="{DynamicResource AccentBrush}"
                                        HorizontalAlignment="Center">
@@ -97,47 +98,49 @@
                                     <Binding Path="TotalSize" Converter="{StaticResource BytesToStringConverter}"/>
                                 </TextBlock.Text>
                             </TextBlock>
-                            <TextBlock Text="Total Size"
-                                       FontSize="12"
+                            <TextBlock Text="Size"
+                                       FontSize="11"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
-                </StackPanel>
+                </WrapPanel>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+            <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                 <Button Content="🔄 Refresh"
                         Command="{Binding RefreshLibraryCommand}"
                         Style="{StaticResource SecondaryButtonStyle}"
-                        Margin="0,0,10,0"/>
-                <Button Content="📦 Update Cache"
+                        Margin="0,0,8,8"/>
+                <Button Content="📦 Cache"
                         Command="{Binding UpdateSteamAppCacheCommand}"
                         Style="{StaticResource SecondaryButtonStyle}"
-                        Margin="0,0,10,0"
+                        Margin="0,0,8,8"
                         ToolTip="Refresh game names and icons from Steam's database"/>
-                <Button Content="⬇ Auto-Update Enabler"
+                <Button Content="⬇ Enable Updates"
                         Style="{StaticResource SecondaryButtonStyle}"
                         Command="{Binding EnableAutoUpdatesCommand}"
-                        Margin="0,0,10,0"
+                        Margin="0,0,8,8"
                         ToolTip="Comment out all setManifestid lines to enable auto-updates (SteamTools mode only)"
                         Visibility="{Binding IsSteamToolsMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                <Button Content="⬆ Auto-Update Disabler"
+                <Button Content="⬆ Disable Updates"
                         Style="{StaticResource SecondaryButtonStyle}"
                         Command="{Binding DisableAutoUpdatesCommand}"
-                        Margin="0,0,10,0"
+                        Margin="0,0,8,8"
                         ToolTip="Uncomment all setManifestid lines to disable auto-updates (SteamTools mode only)"
                         Visibility="{Binding IsSteamToolsMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                <Button Content="🔄 Restart Steam"
+                <Button Content="🔄 Restart"
                         Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding RestartSteamCommand}"/>
-            </StackPanel>
+                        Command="{Binding RestartSteamCommand}"
+                        Margin="0,0,0,8"
+                        ToolTip="Restart Steam"/>
+            </WrapPanel>
         </Grid>
 
         <!-- Search and Filters -->
         <Grid Grid.Row="1" Margin="0,0,0,20">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="400"/>
+                <ColumnDefinition Width="*" MinWidth="150"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
@@ -151,7 +154,8 @@
                      Height="32"
                      Padding="10,0"
                      VerticalContentAlignment="Center"
-                     Margin="0,0,10,0">
+                     Margin="0,0,10,0"
+                     MinWidth="150">
                 <TextBox.Resources>
                     <Style TargetType="TextBox" BasedOn="{StaticResource ModernTextBoxStyle}">
                         <Style.Triggers>

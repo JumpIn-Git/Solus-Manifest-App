@@ -108,10 +108,11 @@ namespace SolusManifestApp.Views
         {
             if (WindowState == WindowState.Maximized)
             {
-                // Adjust for taskbar when maximized
                 var screen = System.Windows.Forms.Screen.FromHandle(new WindowInteropHelper(this).Handle);
-                MaxHeight = screen.WorkingArea.Height + 16; // +16 accounts for border
-                MaxWidth = screen.WorkingArea.Width + 16;
+                var source = PresentationSource.FromVisual(this);
+                double dpiScale = source?.CompositionTarget?.TransformToDevice.M11 ?? 1.0;
+                MaxHeight = (screen.WorkingArea.Height / dpiScale) + 14;
+                MaxWidth = (screen.WorkingArea.Width / dpiScale) + 14;
             }
             else
             {
@@ -126,12 +127,17 @@ namespace SolusManifestApp.Views
 
             if (msg == WM_GETMINMAXINFO)
             {
-                // Handle window maximize to respect work area
                 var screen = System.Windows.Forms.Screen.FromHandle(hwnd);
                 if (screen != null)
                 {
                     var workArea = screen.WorkingArea;
                     var monitorArea = screen.Bounds;
+
+                    var source = PresentationSource.FromVisual(this);
+                    double dpiScale = source?.CompositionTarget?.TransformToDevice.M11 ?? 1.0;
+
+                    int minWidth = (int)(MinWidth * dpiScale);
+                    int minHeight = (int)(MinHeight * dpiScale);
 
                     unsafe
                     {
@@ -140,6 +146,8 @@ namespace SolusManifestApp.Views
                         mmi->ptMaxPosition.y = workArea.Top - monitorArea.Top;
                         mmi->ptMaxSize.x = workArea.Width;
                         mmi->ptMaxSize.y = workArea.Height;
+                        mmi->ptMinTrackSize.x = minWidth;
+                        mmi->ptMinTrackSize.y = minHeight;
                     }
                     handled = true;
                 }

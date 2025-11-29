@@ -7,6 +7,7 @@ using SolusManifestApp.ViewModels;
 using SolusManifestApp.Views;
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -14,6 +15,16 @@ namespace SolusManifestApp
 {
     public partial class App : Application
     {
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetProcessDpiAwarenessContext(IntPtr dpiFlag);
+
+        private static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
+
+        static App()
+        {
+            SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        }
+
         private readonly IHost _host;
         private SingleInstanceHelper? _singleInstance;
         private TrayIconService? _trayIconService;

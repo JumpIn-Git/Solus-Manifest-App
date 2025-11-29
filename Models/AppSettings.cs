@@ -64,8 +64,8 @@ namespace SolusManifestApp.Models
 
         // Display & Interface
         public AppTheme Theme { get; set; } = AppTheme.Default;
-        public double WindowWidth { get; set; } = 1400;
-        public double WindowHeight { get; set; } = 850;
+        public double WindowWidth { get; set; } = 1200;
+        public double WindowHeight { get; set; } = 800;
         public int StorePageSize { get; set; } = 20;
         public int LibraryPageSize { get; set; } = 20;
         public bool RememberWindowPosition { get; set; } = true;
