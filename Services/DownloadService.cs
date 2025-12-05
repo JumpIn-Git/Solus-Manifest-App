@@ -317,12 +317,12 @@ namespace SolusManifestApp.Services
                 var manifestPath = Path.Combine(steamPath, "depotcache");
 
                 // Ensure directories exist
-                Directory.CreateDirectory(luaPath);
                 Directory.CreateDirectory(manifestPath);
 
                 // Only install Lua file in SteamTools mode, NOT in GreenLuma mode
                 if (!isGreenLumaMode)
                 {
+                    Directory.CreateDirectory(luaPath);
                     // Extract the single Lua file from root: {appId}.lua
                     var luaFileName = $"{appId}.lua";
                     var luaFilePath = Path.Combine(tempExtractPath, luaFileName);
